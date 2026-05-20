@@ -1,0 +1,11 @@
+server:
+  port: ${SERVER_PORT:40201}                     # 统一规划：外部服务集成
+
+spring:
+  application:
+    name: yunxi-mcp-github
+
+# GitHub 配置
+github:
+  token: ${GITHUB_TOKEN:}        # 必填：GitHub Personal Access Token
+  api-url: ${GITHUB_API_URL:}    # 可选：GitHub API 地址（国内可设为 https://api.github.com）

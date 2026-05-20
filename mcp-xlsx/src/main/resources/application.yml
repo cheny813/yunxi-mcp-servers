@@ -1,0 +1,10 @@
+server:
+  port: 40402                                    # 统一规划：文档处理服务
+
+xlsx:
+  enabled: true
+  output-dir: ./output
+
+spring:
+  application:
+    name: mcp-xlsx

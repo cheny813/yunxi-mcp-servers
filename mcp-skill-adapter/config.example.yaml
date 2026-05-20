@@ -1,0 +1,23 @@
+# Python Skill MCP Adapter
+
+server:
+  host: "0.0.0.0"
+  port: 8090
+  log_level: "INFO"
+
+skills:
+  # Skills 目录（相对于项目根目录）
+  directory: "./skills"
+  
+  # 是否自动加载目录下的 Skill
+  auto_load: true
+  
+  # Skill 环境变量配置
+  env:
+    BAIDU_API_KEY: ${BAIDU_API_KEY:}
+    # 可以添加更多环境变量...
+
+# HTTP 服务器配置
+http:
+  cors_enabled: true
+  timeout: 30

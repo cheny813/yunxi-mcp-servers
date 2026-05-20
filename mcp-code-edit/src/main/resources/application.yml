@@ -1,0 +1,8 @@
+server:
+  port: 40108
+
+code:
+  edit:
+    root-path: ${CODE_EDIT_PATH:./code}
+    backup-enabled: true
+    backup-path: ./backups

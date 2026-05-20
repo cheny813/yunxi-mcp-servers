@@ -1,0 +1,25 @@
+server:
+  port: 40206                                    # 统一规划：外部服务集成（钉钉40205的下一个）
+
+spring:
+  application:
+    name: mcp-wechat
+
+wechat:
+  enabled: true
+  # 企业微信 CorpID
+  corp-id: ${WECHAT_CORP_ID:}
+  # 企业微信应用 AgentId
+  agent-id: ${WECHAT_AGENT_ID:}
+  # 企业微信应用 Secret
+  secret: ${WECHAT_SECRET:}
+  # 企业微信 Webhook 地址（群机器人，可选）
+  webhook: ${WECHAT_WEBHOOK:}
+  # 超时时间
+  timeout: 10
+  # Token 缓存时间（秒）
+  token-cache-seconds: 7200
+
+logging:
+  level:
+    io.yunxi.mcp: DEBUG

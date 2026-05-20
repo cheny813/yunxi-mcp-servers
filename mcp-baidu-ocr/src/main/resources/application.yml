@@ -1,0 +1,23 @@
+server:
+  port: 40202                                    # 统一规划：外部服务集成
+
+spring:
+  application:
+    name: mcp-baidu-ocr
+
+baidu-ocr:
+  enabled: true
+  # API Key (可以从环境变量 BAIDU_OCR_API_KEY 获取)
+  api-key: ${BAIDU_OCR_API_KEY:}
+  # Secret Key (可以从环境变量 BAIDU_OCR_SECRET_KEY 获取)
+  secret-key: ${BAIDU_OCR_SECRET_KEY:}
+  # API 端点
+  endpoint: https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic
+  # Token 端点
+  token-endpoint: https://aip.baidubce.com/oauth/2.0/token
+  # 超时时间（秒）
+  timeout: 30
+
+logging:
+  level:
+    io.yunxi.mcp: DEBUG

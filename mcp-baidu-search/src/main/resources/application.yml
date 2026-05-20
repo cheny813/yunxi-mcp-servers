@@ -1,0 +1,22 @@
+# Baidu Search MCP Server Configuration
+
+server:
+  port: 40204                                    # 统一规划：外部服务集成
+
+spring:
+  application:
+    name: mcp-baidu-search
+
+# Baidu Search API 配置
+baidu-search:
+  enabled: true
+  # API Key 从环境变量 BAIDU_API_KEY 获取
+  api-key: ${BAIDU_API_KEY:}
+  endpoint: https://qianfan.baidubce.com/v2/ai_search/web_search
+  default-count: 10
+  max-count: 50
+
+logging:
+  level:
+    io.yunxi.mcp.baidusearch: INFO
+    io.yunxi.mcp.common: WARN

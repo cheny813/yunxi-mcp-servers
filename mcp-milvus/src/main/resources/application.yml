@@ -1,0 +1,58 @@
+server:
+  port: 40103                                    # 统一规划：AI/ML 服务
+
+spring:
+  application:
+    name: mcp-milvus
+
+# Milvus 配置
+# 本地 Docker 启动: docker run -p 19530:19530 milvusdb/milvus:v2.6.11
+# 认证说明：
+# - 无认证模式：Milvus 默认不启用认证，无需配置用户名密码
+# - 认证模式：如果 Milvus 启用了认证，需配置 username/password 或 token
+#   - 使用用户名密码：设置 milvus.username 和 milvus.password
+#   - 使用 Token：设置 milvus.token（优先级更高）
+milvus:
+  enabled: true
+  host: ${MILVUS_HOST:192.168.11.48}            # Milvus 服务地址(本机只能用IP，不能用localhost，127.0.0.1)
+  port: ${MILVUS_PORT:19530}                     # Milvus 服务端口
+  database: ${MILVUS_DATABASE:default}           # 数据库名称
+  username: ${MILVUS_USERNAME:root}                  # 用户名（认证模式时需要）
+  password: ${MILVUS_PASSWORD:Milvus}                  # 密码（认证模式时需要）
+  token: ${MILVUS_TOKEN:}                        # Token（替代用户名密码，优先级更高）
+  connect-timeout: 5                             # 连接超时（秒）
+  query-timeout: 30                              # 查询超时（秒）
+
+# Embedding 配置
+# 支持两种 Provider：
+#   - dashscope: 阿里云 DashScope API (需要 API Key)
+#   - ollama: 本地 Ollama 服务 (无 API 费用)
+# 
+# Ollama 安装：
+#   1. 下载安装: https://ollama.com/download
+#   2. 拉取模型: ollama pull bge-m3
+#       bge-m3        - BGE 多语言，1024维，中文最佳
+#       bge-large-zh  - 中文专用，1024维
+#   3. 启动服务: ollama serve
+embedding:
+  enabled: true
+  # Provider 选择: dashscope 或 ollama
+  provider: ${EMBEDDING_PROVIDER:ollama}
+  
+  # Ollama 配置（本地服务，无 API 费用）
+  ollama:
+    base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+    model: ${OLLAMA_EMBEDDING_MODEL:bge-m3}
+
+  # DashScope 配置（云端 API，需要 API Key）
+  dashscope:
+    api-key: ${DASHSCOPE_API_KEY:}
+    model: text-embedding-v3
+    dimension: 1024
+
+logging:
+  level:
+    io.yunxi.mcp.milvus: INFO
+    io.yunxi.mcp.milvus.config: DEBUG
+    io.yunxi.mcp.milvus.embedding: DEBUG
+    io.milvus: WARN

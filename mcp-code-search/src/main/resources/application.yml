@@ -1,0 +1,6 @@
+server:
+  port: 40106
+
+code:
+  search:
+    root-path: ${CODE_SEARCH_PATH:./code}

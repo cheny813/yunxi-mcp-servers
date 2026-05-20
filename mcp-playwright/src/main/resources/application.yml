@@ -1,0 +1,62 @@
+server:
+  port: 40301                                    # 统一规划：AI/ML 服务
+
+spring:
+  application:
+    name: yunxi-mcp-playwright
+
+# ============================================================================
+# Playwright 浏览器自动化配置
+# ============================================================================
+# Playwright 是微软开发的浏览器自动化测试工具，支持所有主流浏览器
+# 官网: https://playwright.dev/
+#
+# 【支持的浏览器】
+# - Chromium（Chrome、Edge）
+# - Firefox
+# - WebKit（Safari）
+#
+# 【典型应用场景】
+# - 传统系统自动化测试
+# - 页面数据抓取
+# - 表单自动填写
+# - RPA（机器人流程自动化）
+# ============================================================================
+playwright:
+  # 默认浏览器: chromium, firefox, webkit
+  browser: chromium
+  
+  # 是否为无头模式（无界面）
+  headless: true
+  
+  # 视口大小
+  viewport-width: 1920
+  viewport-height: 1080
+  
+  # 超时设置（毫秒）
+  timeout:
+    default: 30000      # 默认超时 30 秒
+    navigation: 60000   # 页面导航超时 60 秒
+    action: 5000        # 动作超时 5 秒
+  
+  # 是否等待网络空闲
+  wait-for-network-idle: true
+  
+  # 用户代理（可选）
+  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+
+  # 截图配置
+  screenshot:
+    enabled: true
+    path: ./screenshots
+    full-page: false
+
+  # 下载配置
+  download:
+    enabled: true
+    path: ./downloads
+
+logging:
+  level:
+    io.yunxi.mcp.playwright: DEBUG
+    com.microsoft.playwright: INFO

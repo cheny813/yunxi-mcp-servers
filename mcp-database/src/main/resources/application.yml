@@ -1,0 +1,35 @@
+server:
+  port: ${SERVER_PORT:40101}                     # 统一规划：数据库服务
+
+spring:
+  application:
+    name: yunxi-mcp-database
+
+  datasource:
+    url: jdbc:mysql://${DB_HOST:192.168.10.153}:${DB_PORT:3306}/${DB_NAME:nutrition_zhaoxian}?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      connection-timeout: 30000
+
+# ============================================================
+# 多数据库配置
+# spring.datasource 已配置默认库（nutrition），自动注册为 id="default"。
+# 在此配置其他业务系统的数据库，启动时自动注册。
+# ============================================================
+mcp-databases:
+  # finance:
+  #   display-name: 经费数据库
+  #   jdbc:
+  #     url: jdbc:mysql://${FINANCE_DB_HOST:192.168.10.154}:${FINANCE_DB_PORT:3306}/${FINANCE_DB_NAME:finance_db}?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+  #     username: ${FINANCE_DB_USERNAME:root}
+  #     password: ${FINANCE_DB_PASSWORD:root}
+  # foodsafety:
+  #   display-name: 食安数据库
+  #   jdbc:
+  #     url: jdbc:mysql://${FOODSAFETY_DB_HOST:192.168.10.155}:${FOODSAFETY_DB_PORT:3306}/${FOODSAFETY_DB_NAME:foodsafety_db}?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+  #     username: ${FOODSAFETY_DB_USERNAME:root}
+  #     password: ${FOODSAFETY_DB_PASSWORD:root}

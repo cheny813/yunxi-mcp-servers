@@ -1,0 +1,21 @@
+server:
+  port: 40106
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+monitoring:
+  alert:
+    check-interval-seconds: 60
+    max-alerts-history: 1000
+
+logging:
+  level:
+    root: INFO
+    io.yunxi.mcp.monitoring: DEBUG

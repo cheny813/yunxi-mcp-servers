@@ -1,0 +1,16 @@
+server:
+  port: 40107
+
+spring:
+  application:
+    name: mcp-knowledge
+
+# Milvus 配置
+milvus:
+  host: localhost
+  port: 19530
+  collection-name: knowledge_base
+
+# DashScope Embedding 配置
+dashscope:
+  api-key: ${DASHSCOPE_API_KEY:}

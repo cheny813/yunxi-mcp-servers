@@ -1,0 +1,21 @@
+server:
+  port: 40205                                    # 统一规划：外部服务集成
+
+spring:
+  application:
+    name: mcp-dingtalk
+
+dingtalk:
+  enabled: true
+  # Webhook 地址
+  webhook: ${DINGTALK_WEBHOOK:}
+  # 加签密钥（可选）
+  secret: ${DINGTALK_SECRET:}
+  # 默认消息类型
+  default-msg-type: text
+  # 超时时间
+  timeout: 10
+
+logging:
+  level:
+    io.yunxi.mcp: DEBUG

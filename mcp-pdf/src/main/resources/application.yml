@@ -1,0 +1,10 @@
+server:
+  port: 40401                                    # 统一规划：文档处理服务
+
+pdf:
+  enabled: true
+  output-dir: ./output
+
+spring:
+  application:
+    name: mcp-pdf

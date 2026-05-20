@@ -1,0 +1,12 @@
+server:
+  port: 40601                                    # 统一规划：业务应用服务
+
+spring:
+  application:
+    name: mcp-formfill
+
+# MCP 配置
+mcp:
+  server:
+    name: formfill-server
+    description: 智能表单填写服务器，支持食谱、食安、经费等多种场景

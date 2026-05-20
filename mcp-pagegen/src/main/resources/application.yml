@@ -1,0 +1,46 @@
+server:
+  port: 40303                                    # 统一规划：AI/ML 服务
+
+spring:
+  application:
+    name: yunxi-mcp-pagegen
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    cache: false
+
+# ============================================================================
+# 页面生成配置
+# ============================================================================
+# 自动生成统计页面、列表页、详情页
+# ============================================================================
+
+pagegen:
+  # 默认主题: bootstrap5, adminlte, tailwind
+  theme: bootstrap5
+  
+  # 图表配置（集成 mcp-chart）
+  chart:
+    enabled: true
+    chart-service-url: http://localhost:40302
+  
+  # 数据表格配置
+  table:
+    default-page-size: 20
+    export-enabled: true
+    sort-enabled: true
+    filter-enabled: true
+  
+  # 导出配置
+  export:
+    excel:
+      enabled: true
+      temp-path: ./temp/excel
+    pdf:
+      enabled: true
+      temp-path: ./temp/pdf
+
+logging:
+  level:
+    io.yunxi.mcp.pagegen: DEBUG

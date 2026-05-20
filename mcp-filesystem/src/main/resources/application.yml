@@ -1,0 +1,10 @@
+server:
+  port: ${SERVER_PORT:40501}                     # 统一规划：基础设施服务
+
+spring:
+  application:
+    name: yunxi-mcp-filesystem
+
+# 允许访问的根目录（建议配置为项目根目录的子目录）
+mcp:
+  allowed-directory: ${ALLOWED_DIRECTORY:./workspace}

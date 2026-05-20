@@ -1,0 +1,19 @@
+server:
+  port: 40203                                    # 统一规划：外部服务集成
+
+spring:
+  application:
+    name: mcp-baidu-asr
+
+baidu-asr:
+  enabled: true
+  api-key: ${BAIDU_ASR_API_KEY:}
+  secret-key: ${BAIDU_ASR_SECRET_KEY:}
+  endpoint: https://vop.baidu.com/server_api
+  token-endpoint: https://aip.baidubce.com/oauth/2.0/token
+  timeout: 60
+  dev-pid: "1537"  # 普通话
+
+logging:
+  level:
+    io.yunxi.mcp: DEBUG

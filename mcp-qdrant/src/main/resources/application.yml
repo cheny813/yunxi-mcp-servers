@@ -1,0 +1,25 @@
+server:
+  port: 40104                                    # 统一规划：数据库服务
+
+spring:
+  application:
+    name: mcp-qdrant
+
+qdrant:
+  enabled: true
+  # Qdrant 服务器地址
+  host: localhost
+  port: 6333
+  # 是否使用 TLS
+  use-tls: false
+  # API Key（可选）
+  api-key: ${QDRANT_API_KEY:}
+  # 超时时间
+  timeout: 30
+  # 默认搜索参数
+  default-top-k: 10
+  default-score-threshold: 0.7
+
+logging:
+  level:
+    io.yunxi.mcp: DEBUG

@@ -1,0 +1,29 @@
+server:
+  port: ${SERVER_PORT:40102}                     # 统一规划：数据库服务
+
+spring:
+  application:
+    name: yunxi-mcp-redis
+
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:redispass}
+      database: ${REDIS_DATABASE:1}
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+# 日志编码配置
+logging:
+  level:
+    root: INFO
+    io.yunxi.mcp.redis: DEBUG
+  console:
+    charset: UTF-8
+  file:
+    charset: UTF-8

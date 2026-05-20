@@ -1,0 +1,27 @@
+server:
+  port: 40302                                    # 统一规划：AI/ML 服务
+
+spring:
+  application:
+    name: yunxi-mcp-chart
+
+chart:
+  # 图表输出目录
+  output-dir: ./charts
+  # 图表图片格式：png, jpeg, webp
+  image-format: png
+  # 图表宽度（像素）
+  image-width: 800
+  # 图表高度（像素）
+  image-height: 600
+  # 是否使用 headless 模式
+  headless: true
+  # 浏览器类型：chromium, firefox, webkit
+  browser: chromium
+  # 超时时间（毫秒）
+  timeout: 30000
+
+logging:
+  level:
+    io.yunxi.mcp.chart: DEBUG
+    com.microsoft.playwright: INFO

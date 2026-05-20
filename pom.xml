@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.yunxi</groupId>
+    <artifactId>yunxi-mcp-servers</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+    <name>yunxi MCP Servers</name>
+    <description>MCP (Model Context Protocol) Server implementations for AI agents</description>
+
+    <properties>
+        <java.version>17</java.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <spring-boot.version>3.5.12</spring-boot.version>
+        <lombok.version>1.18.30</lombok.version>
+    </properties>
+
+    <modules>
+        <!-- 公共模块 -->
+        <module>mcp-common</module>
+
+        <!-- 数据库服务 (40100-40199) -->
+        <module>mcp-database</module>
+        <module>mcp-database-stdio</module>
+        <module>mcp-redis</module>
+        <module>mcp-milvus</module>
+        <module>mcp-qdrant</module>
+
+        <!-- 新增服务 -->
+        <module>mcp-knowledge</module>
+        <module>mcp-logging</module>
+        <module>mcp-monitoring</module>
+        <module>mcp-code-search</module>
+        <module>mcp-code-edit</module>
+
+        <!-- 外部服务集成 (40200-40299) -->
+        <module>mcp-github</module>
+        <module>mcp-baidu-ocr</module>
+        <module>mcp-baidu-asr</module>
+        <module>mcp-baidu-search</module>
+        <module>mcp-dingtalk</module>
+        <module>mcp-wechat</module>
+
+        <!-- AI/ML 服务 (40300-40399) -->
+        <module>mcp-playwright</module>
+        <module>mcp-chart</module>
+        <module>mcp-pagegen</module>
+        <module>mcp-memory-tool</module>
+
+        <!-- 文档处理服务 (40400-40499) -->
+        <module>mcp-pdf</module>
+        <module>mcp-xlsx</module>
+        <module>mcp-pptx</module>
+
+        <!-- 基础设施服务 (40500-40599) -->
+        <module>mcp-filesystem</module>
+        <module>mcp-mqtt</module>
+        <module>mcp-email</module>
+        <module>mcp-docker</module>
+        <module>mcp-k8s</module>
+        <module>mcp-s3</module>
+        <module>mcp-elasticsearch</module>
+        <module>mcp-mongodb</module>
+        <module>mcp-git</module>
+        <module>mcp-wikipedia</module>
+
+        <!-- 业务应用服务 (40600-40699) -->
+        <module>mcp-formfill</module>
+
+        <!-- 其他 -->
+        <module>mcp-api-gateway</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Spring Boot BOM -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- MCP Common -->
+            <dependency>
+                <groupId>io.yunxi</groupId>
+                <artifactId>mcp-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- Lombok -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <scope>provided</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>${spring-boot.version}</version>
+                    <configuration>
+                        <excludes>
+                            <exclude>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                            </exclude>
+                        </excludes>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.11.0</version>
+                    <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                        <encoding>UTF-8</encoding>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <repositories>
+        <repository>
+            <id>central</id>
+            <url>https://repo1.maven.org/maven2/</url>
+        </repository>
+        <repository>
+            <id>aliyun</id>
+            <url>https://maven.aliyun.com/repository/public</url>
+        </repository>
+    </repositories>
+</project>

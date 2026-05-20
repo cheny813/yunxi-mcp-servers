@@ -1,0 +1,44 @@
+# 生产环境配置文件示例
+# 复制为 application-prod.yml 并根据实际环境修改
+
+server:
+  port: 40304
+
+spring:
+  profiles:
+    active: prod
+
+# 生产环境模式
+# 使用 milvus 作为存储引擎，dashscope 作为嵌入服务
+yunxi:
+  environment:
+    mode: prod  # 设置为生产模式
+
+# 内存存储配置
+memory:
+  store:
+    type: milvus  # 生产环境使用 Milvus 向量数据库
+
+# Milvus 配置
+milvus:
+  enabled: true
+  host: ${MILVUS_HOST:localhost}  # 设置真实的 Milvus 主机
+  port: ${MILVUS_PORT:19530}
+  uri: ${MILVUS_URI:http://localhost:19530}
+  token: ${MILVUS_TOKEN:}
+  collection-name: ${MILVUS_COLLECTION_NAME:agent_memories}
+  embedding-dimension: ${MILVUS_EMBEDDING_DIMENSION:1024}
+
+# Embedding 配置 - 生产环境使用真实的嵌入服务
+embedding:
+  provider: dashscope  # 使用 DashScope 而不是 Mock
+  default-dimension: 1024
+  dashscope:
+    api-key: ${DASHSCOPE_API_KEY:your_dashscope_api_key}  # 必须设置
+    model: text-embedding-v3
+
+# 生产环境日志级别
+logging:
+  level:
+    io.yunxi.mcp.memory: INFO
+    io.yunxi.platform.framework.intelligent.memory: INFO
