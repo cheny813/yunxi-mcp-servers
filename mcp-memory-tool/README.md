@@ -703,7 +703,7 @@ java -jar target/mcp-memory-tool-1.0.0.jar
 ## 相关资源
 
 - [MCP 协议规范](https://modelcontextprotocol.com)
-- [yunxi-agent-platform 文档](https://github.com/yunxi/yunxi-agent-platform)
+- [yunxi-agent-platform 文档](https://gitcode.com/chenyao813/yunxi-agent-platform)
 - [API 参考文档](./API_REFERENCE.md)
 
 ## 许可证
