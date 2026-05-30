@@ -29,9 +29,17 @@ yunxi-mcp-servers/
 ├── mcp-common/              # 公共模块 - MCP 协议实现
 ├── mcp-database-stdio/      # 数据库 MCP 服务器（stdio 模式）
 ├── mcp-database/            # 数据库 MCP 服务器（HTTP/SSE 模式）
-├── mcp-filesystem/          # 文件系统 MCP 服务器
 ├── mcp-redis/              # Redis MCP 服务器
+├── mcp-milvus/             # Milvus 向量数据库 MCP 服务器
+├── mcp-qdrant/             # Qdrant 向量数据库 MCP 服务器
+├── mcp-logging/            # 日志查询 MCP 服务器
+├── mcp-monitoring/         # 系统监控 MCP 服务器
+├── mcp-knowledge/          # 知识库 MCP 服务器
+├── mcp-code-search/        # 代码搜索 MCP 服务器
+├── mcp-code-edit/          # 代码编辑 MCP 服务器
+├── mcp-filesystem/          # 文件系统 MCP 服务器
 ├── mcp-git/                # Git MCP 服务器
+├── mcp-github/              # GitHub MCP 服务器
 ├── mcp-s3/                 # AWS S3 MCP 服务器
 ├── mcp-mongodb/            # MongoDB MCP 服务器
 ├── mcp-elasticsearch/      # Elasticsearch MCP 服务器
@@ -39,8 +47,23 @@ yunxi-mcp-servers/
 ├── mcp-k8s/                # Kubernetes MCP 服务器
 ├── mcp-email/              # 邮件发送 MCP 服务器
 ├── mcp-wikipedia/          # Wikipedia MCP 服务器
-├── mcp-github/              # GitHub MCP 服务器
+├── mcp-baidu-ocr/          # 百度 OCR MCP 服务器
+├── mcp-baidu-asr/          # 百度语音识别 MCP 服务器
+├── mcp-baidu-search/       # 百度搜索 MCP 服务器
+├── mcp-dingtalk/           # 钉钉集成 MCP 服务器
+├── mcp-wechat/             # 企微集成 MCP 服务器
 ├── mcp-api-gateway/        # API 网关 MCP 服务器
+├── mcp-playwright/         # 浏览器自动化 MCP 服务器
+├── mcp-chart/              # 图表生成 MCP 服务器
+├── mcp-pagegen/            # 页面生成 MCP 服务器
+├── mcp-memory-tool/        # 记忆管理 MCP 服务器
+├── mcp-pdf/                # PDF 处理 MCP 服务器
+├── mcp-xlsx/               # Excel 处理 MCP 服务器
+├── mcp-pptx/               # PPT 处理 MCP 服务器
+├── mcp-mqtt/               # MQTT 消息队列 MCP 服务器
+├── mcp-formfill/           # 表单填写 MCP 服务器
+├── mcp-nutrition/          # 营养配餐 MCP 服务器
+├── mcp-skill-adapter/      # Python Skill 适配器（Python）
 └── README.md
 ```
 
@@ -56,7 +79,7 @@ yunxi-mcp-servers/
 | **agent-rule-engine** | 40002 | http://localhost:40002 | yunxi-agent-platform |
 | **agent-app** (聚合启动) | 40001 | http://localhost:40001 | yunxi-agent-platform |
 
-### 2.2 数据库服务
+### 2.2 数据库与存储
 
 | 服务 | 端口 | 说明 |
 |------|------|------|
@@ -66,6 +89,9 @@ yunxi-mcp-servers/
 | **mcp-qdrant** | 40104 | Qdrant 向量数据库 |
 | **mcp-logging** | 40105 | 日志查询 |
 | **mcp-monitoring** | 40106 | 系统监控 |
+| **mcp-knowledge** | 40107 | 知识库 |
+| **mcp-code-edit** | 40108 | 代码编辑 |
+| **mcp-code-search** | 40106 | 代码搜索 |
 
 ### 2.3 外部服务
 
@@ -76,6 +102,7 @@ yunxi-mcp-servers/
 | **mcp-baidu-asr** | 40203 | 百度语音识别 |
 | **mcp-baidu-search** | 40204 | 百度搜索 |
 | **mcp-dingtalk** | 40205 | 钉钉集成 |
+| **mcp-wechat** | 40206 | 企微集成 |
 
 ### 2.4 AI/ML 服务
 
@@ -86,7 +113,7 @@ yunxi-mcp-servers/
 | **mcp-pagegen** | 40303 | 页面生成 |
 | **mcp-memory-tool** | 40304 | 记忆管理 |
 
-### 2.5 文档服务
+### 2.5 文档处理
 
 | 服务 | 端口 | 说明 |
 |------|------|------|
@@ -101,11 +128,20 @@ yunxi-mcp-servers/
 | **mcp-filesystem** | 40501 | 文件系统 |
 | **mcp-mqtt** | 40502 | MQTT 消息队列 |
 
-### 2.7 业务应用
+### 2.7 其他服务
 
 | 服务 | 端口 | 说明 |
 |------|------|------|
 | **mcp-formfill** | 40601 | 表单填写 |
+| **mcp-nutrition** | 40602 | 营养配餐 |
+| **mcp-git** | 8085 | Git 仓库操作 |
+| **mcp-s3** | 8086 | AWS S3 对象存储 |
+| **mcp-mongodb** | 8087 | MongoDB 数据库 |
+| **mcp-elasticsearch** | 8088 | Elasticsearch 搜索 |
+| **mcp-docker** | 8089 | Docker 容器管理 |
+| **mcp-k8s** | 8090 | Kubernetes 集群管理 |
+| **mcp-email** | 8091 | 邮件发送 |
+| **mcp-wikipedia** | 8092 | Wikipedia 搜索 |
 
 ### 2.8 Agent 扩展
 
@@ -113,23 +149,24 @@ yunxi-mcp-servers/
 |------|------|------|
 | **mcp-skill-adapter** | 40801 | Python Skill 适配器 |
 
-### 2.9 端口规则
+### 2.10 端口规则
 
-```
+```text
 4xxxx: 统一前缀（避免常见端口冲突）
 
 400xx: 核心平台
-401xx: 数据库
+401xx: 数据库与存储
 402xx: 外部服务
 403xx: AI/ML
 404xx: 文档处理
 405xx: 基础设施
-406xx: 业务应用
+406xx: 其他服务
 407xx: 网关适配器（预留）
 408xx: Agent 扩展
+8xxx: 工具类服务（默认端口）
 ```
 
-### 2.10 快速检查
+### 2.11 快速检查
 
 ```bash
 # Windows
@@ -616,6 +653,11 @@ agentscope:
 | mcp-pdf | pdf_operation | 已完成 |
 | mcp-xlsx | xlsx_operation | 已完成 |
 | mcp-pptx | pptx_operation | 已完成 |
+| mcp-memory-tool | memory_query, memory_save | 已完成 |
+| mcp-milvus | vector_search, vector_insert | 已完成 |
+| mcp-logging | log_query | 已完成 |
+| mcp-knowledge | knowledge_query | 已完成 |
+| mcp-code-search | code_search | 已完成 |
 
 ### 5.9 快速参考模板
 
