@@ -1,0 +1,17 @@
+server:
+  port: 40602
+
+spring:
+  application:
+    name: mcp-nutrition
+  datasource:
+    url: jdbc:mysql://localhost:3306/school_nutrition?useUnicode=true&characterEncoding=utf-8
+    username: root
+    password: ${MYSQL_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+# MCP 服务标识（注册到平台时使用）
+mcp:
+  server:
+    name: nutrition-mcp
+    version: 1.0.0

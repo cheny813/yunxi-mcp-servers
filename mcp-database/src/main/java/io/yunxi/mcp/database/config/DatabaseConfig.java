@@ -91,10 +91,11 @@ public class DatabaseConfig {
     /**
      * 最大返回行数限制
      * <p>
-     * 防止大数据量查询导致内存溢出，默认为 1000。
+     * 防止大数据量查询导致内存溢出，数据同步等场景需要较大值。
+     * 各管道使用的 SyncEngine 已设置 limit=10000，此处保持一致。
      * </p>
      */
-    private int maxRowsLimit = 1000;
+    private int maxRowsLimit = 10000;
 
     /**
      * 查询超时时间（秒）

@@ -94,3 +94,6 @@ build/
 .env.local
 .env.*.local
 .comate/
+
+# 本地测试文件
+.agentscope/

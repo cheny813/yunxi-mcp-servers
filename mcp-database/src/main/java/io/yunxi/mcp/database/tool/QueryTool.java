@@ -7,6 +7,9 @@ import io.yunxi.mcp.database.config.DatabaseConfig;
 import io.yunxi.mcp.database.config.DatabaseConfigService;
 import io.yunxi.mcp.database.security.SqlSandbox;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
@@ -34,6 +37,11 @@ public class QueryTool implements ToolHandler {
      * </p>
      */
     private final DatabaseConfigService configService;
+
+    /** JSON 映射器（支持 Java 8 日期时间类型） */
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     public QueryTool(DatabaseConfigService configService) {
         this.configService = configService;
@@ -65,7 +73,12 @@ public class QueryTool implements ToolHandler {
                                 "limit", Map.of(
                                         "type", "integer",
                                         "description", "Max rows to return (default: 100)",
-                                        "default", 100)),
+                                        "default", 100),
+                                "format", Map.of(
+                                        "type", "string",
+                                        "description",
+                                        "Output format: 'text' for human-readable table, 'json' for JSON array (default: text)",
+                                        "default", "text")),
                         "required", List.of("sql")))
                 .build();
     }
@@ -75,6 +88,7 @@ public class QueryTool implements ToolHandler {
         String dbId = (String) arguments.getOrDefault("db_id", "default");
         String sql = (String) arguments.get("sql");
         int limit = arguments.containsKey("limit") ? ((Number) arguments.get("limit")).intValue() : 100;
+        String format = (String) arguments.getOrDefault("format", "text");
 
         if (sql == null || sql.isBlank()) {
             return ToolResult.error("SQL query is required");
@@ -127,6 +141,13 @@ public class QueryTool implements ToolHandler {
                 result.put("columns", getColumnNames(metaData));
                 result.put("rows", rows);
 
+                if ("json".equals(format)) {
+                    try {
+                        return ToolResult.text(objectMapper.writeValueAsString(rows));
+                    } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+                        return ToolResult.error("JSON 序列化失败: " + e.getMessage());
+                    }
+                }
                 return ToolResult.text(formatResult(result));
             }
         } catch (SQLException e) {

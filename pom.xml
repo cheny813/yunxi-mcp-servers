@@ -71,6 +71,7 @@
 
         <!-- 业务应用服务 (40600-40699) -->
         <module>mcp-formfill</module>
+        <module>mcp-nutrition</module>
 
         <!-- 其他 -->
         <module>mcp-api-gateway</module>
