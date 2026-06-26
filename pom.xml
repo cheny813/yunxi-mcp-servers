@@ -18,6 +18,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring-boot.version>3.5.12</spring-boot.version>
         <lombok.version>1.18.30</lombok.version>
+        <!-- 修复 jackson-databind 安全漏洞，覆盖 Spring Boot 3.5.12 管理的 2.19.4 -->
+        <jackson-bom.version>2.21.4</jackson-bom.version>
     </properties>
 
     <modules>
@@ -79,6 +81,15 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- 覆盖 Jackson BOM 版本（修复安全漏洞，必须放在 Spring Boot BOM 之前以优先生效） -->
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>2.21.4</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
             <!-- Spring Boot BOM -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
