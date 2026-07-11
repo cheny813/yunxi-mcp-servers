@@ -1,8 +1,6 @@
 package io.yunxi.mcp.formfill.tool;
 
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import io.yunxi.mcp.formfill.service.FormFillerService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -42,10 +40,19 @@ public class FormFillerTools {
     public ToolHandler fillRecipeForm() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("formfill_recipe")
-                        .description("""
+
+            public String getName() {
+
+                return "formfill_recipe";
+
+            }
+
+
+            @Override
+
+            public String getDescription() {
+
+                return """
                                 填写营养食谱表单。支持以下场景：
                                 1. 单日食谱：填写一个食谱的信息
                                 2. 周计划食谱：填写一周的食谱安排（周一到周日，每天三餐）
@@ -63,8 +70,18 @@ public class FormFillerTools {
                                 - nutritionNotes: 营养建议
                                 - day: 星期几（用于周计划：monday/tuesday/wednesday/thursday/friday/saturday/sunday）
                                 - meal: 餐次（breakfast/lunch/dinner）
-                                """)
-                        .inputSchema(Map.of(
+                                """;
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of(
                                 "type", "object",
                                 "properties", Map.of(
                                         "recipeData", Map.of(
@@ -103,12 +120,13 @@ public class FormFillerTools {
                                         )
                                 ),
                                 "required", List.of("recipeData")
-                        ))
-                        .build();
+                        );
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+            public String execute(Map<String, Object> arguments) {
                 try {
                     @SuppressWarnings("unchecked")
                     Map<String, Object> recipeData = (Map<String, Object>) arguments.get("recipeData");
@@ -119,10 +137,10 @@ public class FormFillerTools {
                     log.info("填写食谱表单: recipeData={}, day={}, meal={}", recipeData, day, meal);
 
                     String result = formFillerService.fillRecipeForm(recipeData, day, meal, targetPage);
-                    return ToolResult.text(result);
+                    return (result);
                 } catch (Exception e) {
                     log.error("填写食谱表单失败", e);
-                    return ToolResult.error("填写失败: " + e.getMessage());
+                    throw new RuntimeException("填写失败: " + e.getMessage());
                 }
             }
         };
@@ -134,10 +152,19 @@ public class FormFillerTools {
     public ToolHandler fillWeeklyRecipePlan() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("formfill_weekly_recipe")
-                        .description("""
+
+            public String getName() {
+
+                return "formfill_weekly_recipe";
+
+            }
+
+
+            @Override
+
+            public String getDescription() {
+
+                return """
                                 批量填写一周的营养食谱计划。
                                 
                                 输入格式示例：
@@ -150,8 +177,18 @@ public class FormFillerTools {
                                   "tuesday": { ... },
                                   ...
                                 }
-                                """)
-                        .inputSchema(Map.of(
+                                """;
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of(
                                 "type", "object",
                                 "properties", Map.of(
                                         "weeklyPlan", Map.of(
@@ -164,12 +201,13 @@ public class FormFillerTools {
                                         )
                                 ),
                                 "required", List.of("weeklyPlan")
-                        ))
-                        .build();
+                        );
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+            public String execute(Map<String, Object> arguments) {
                 try {
                     @SuppressWarnings("unchecked")
                     Map<String, Object> weeklyPlan = (Map<String, Object>) arguments.get("weeklyPlan");
@@ -178,10 +216,10 @@ public class FormFillerTools {
                     log.info("批量填写周计划食谱: 共{}天", weeklyPlan.size());
 
                     String result = formFillerService.fillWeeklyRecipePlan(weeklyPlan, targetPage);
-                    return ToolResult.text(result);
+                    return (result);
                 } catch (Exception e) {
                     log.error("批量填写周计划食谱失败", e);
-                    return ToolResult.error("填写失败: " + e.getMessage());
+                    throw new RuntimeException("填写失败: " + e.getMessage());
                 }
             }
         };
@@ -193,10 +231,19 @@ public class FormFillerTools {
     public ToolHandler fillSafetyForm() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("formfill_safety")
-                        .description("""
+
+            public String getName() {
+
+                return "formfill_safety";
+
+            }
+
+
+            @Override
+
+            public String getDescription() {
+
+                return """
                                 填写食品安全检测表单。
                                 
                                 字段说明：
@@ -210,8 +257,18 @@ public class FormFillerTools {
                                 - unit: 单位
                                 - inspector: 检测人
                                 - notes: 备注
-                                """)
-                        .inputSchema(Map.of(
+                                """;
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of(
                                 "type", "object",
                                 "properties", Map.of(
                                         "safetyData", Map.of(
@@ -224,12 +281,13 @@ public class FormFillerTools {
                                         )
                                 ),
                                 "required", List.of("safetyData")
-                        ))
-                        .build();
+                        );
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+            public String execute(Map<String, Object> arguments) {
                 try {
                     @SuppressWarnings("unchecked")
                     Map<String, Object> safetyData = (Map<String, Object>) arguments.get("safetyData");
@@ -238,10 +296,10 @@ public class FormFillerTools {
                     log.info("填写食品安全表单: {}", safetyData);
 
                     String result = formFillerService.fillSafetyForm(safetyData, targetPage);
-                    return ToolResult.text(result);
+                    return (result);
                 } catch (Exception e) {
                     log.error("填写食品安全表单失败", e);
-                    return ToolResult.error("填写失败: " + e.getMessage());
+                    throw new RuntimeException("填写失败: " + e.getMessage());
                 }
             }
         };
@@ -253,10 +311,19 @@ public class FormFillerTools {
     public ToolHandler fillBudgetForm() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("formfill_budget")
-                        .description("""
+
+            public String getName() {
+
+                return "formfill_budget";
+
+            }
+
+
+            @Override
+
+            public String getDescription() {
+
+                return """
                                 填写经费管理表单。
                                 
                                 字段说明：
@@ -269,8 +336,18 @@ public class FormFillerTools {
                                 - paymentDate: 支付日期
                                 - supplier: 供应商
                                 - notes: 备注
-                                """)
-                        .inputSchema(Map.of(
+                                """;
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of(
                                 "type", "object",
                                 "properties", Map.of(
                                         "budgetData", Map.of(
@@ -283,12 +360,13 @@ public class FormFillerTools {
                                         )
                                 ),
                                 "required", List.of("budgetData")
-                        ))
-                        .build();
+                        );
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+            public String execute(Map<String, Object> arguments) {
                 try {
                     @SuppressWarnings("unchecked")
                     Map<String, Object> budgetData = (Map<String, Object>) arguments.get("budgetData");
@@ -297,10 +375,10 @@ public class FormFillerTools {
                     log.info("填写经费表单: {}", budgetData);
 
                     String result = formFillerService.fillBudgetForm(budgetData, targetPage);
-                    return ToolResult.text(result);
+                    return (result);
                 } catch (Exception e) {
                     log.error("填写经费表单失败", e);
-                    return ToolResult.error("填写失败: " + e.getMessage());
+                    throw new RuntimeException("填写失败: " + e.getMessage());
                 }
             }
         };
@@ -312,18 +390,37 @@ public class FormFillerTools {
     public ToolHandler fillGenericForm() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("formfill_generic")
-                        .description("""
+
+            public String getName() {
+
+                return "formfill_generic";
+
+            }
+
+
+            @Override
+
+            public String getDescription() {
+
+                return """
                                 通用表单填写工具。可以填写任意表单，需要提供字段映射配置。
                                 
                                 使用场景：
                                 - 没有专用工具的表单
                                 - 自定义表单结构
                                 - 快速原型验证
-                                """)
-                        .inputSchema(Map.of(
+                                """;
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of(
                                 "type", "object",
                                 "properties", Map.of(
                                         "formData", Map.of(
@@ -340,12 +437,13 @@ public class FormFillerTools {
                                         )
                                 ),
                                 "required", List.of("formData")
-                        ))
-                        .build();
+                        );
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+            public String execute(Map<String, Object> arguments) {
                 try {
                     @SuppressWarnings("unchecked")
                     Map<String, Object> formData = (Map<String, Object>) arguments.get("formData");
@@ -356,10 +454,10 @@ public class FormFillerTools {
                     log.info("填写通用表单: formData={}, fieldMapping={}", formData, fieldMapping);
 
                     String result = formFillerService.fillGenericForm(formData, fieldMapping, targetPage);
-                    return ToolResult.text(result);
+                    return (result);
                 } catch (Exception e) {
                     log.error("填写通用表单失败", e);
-                    return ToolResult.error("填写失败: " + e.getMessage());
+                    throw new RuntimeException("填写失败: " + e.getMessage());
                 }
             }
         };
@@ -371,14 +469,33 @@ public class FormFillerTools {
     public ToolHandler getFormStructure() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("formfill_get_structure")
-                        .description("""
+
+            public String getName() {
+
+                return "formfill_get_structure";
+
+            }
+
+
+            @Override
+
+            public String getDescription() {
+
+                return """
                                 获取目标页面的表单结构信息。
                                 返回表单字段列表、字段类型和验证规则，帮助 AI 了解如何填写表单。
-                                """)
-                        .inputSchema(Map.of(
+                                """;
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of(
                                 "type", "object",
                                 "properties", Map.of(
                                         "scene", Map.of(
@@ -392,12 +509,13 @@ public class FormFillerTools {
                                         )
                                 ),
                                 "required", List.of()
-                        ))
-                        .build();
+                        );
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+            public String execute(Map<String, Object> arguments) {
                 try {
                     String scene = (String) arguments.getOrDefault("scene", "auto");
                     String targetPage = (String) arguments.get("targetPage");
@@ -405,10 +523,10 @@ public class FormFillerTools {
                     log.info("获取表单结构: scene={}, targetPage={}", scene, targetPage);
 
                     String result = formFillerService.getFormStructure(scene, targetPage);
-                    return ToolResult.text(result);
+                    return (result);
                 } catch (Exception e) {
                     log.error("获取表单结构失败", e);
-                    return ToolResult.error("获取失败: " + e.getMessage());
+                    throw new RuntimeException("获取失败: " + e.getMessage());
                 }
             }
         };

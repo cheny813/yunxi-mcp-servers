@@ -1,6 +1,6 @@
 package io.yunxi.mcp.api;
 
-import io.yunxi.mcp.common.server.AbstractMcpServer;
+import io.yunxi.mcp.common.server.AbstractStdioMcpServer;
 import io.yunxi.mcp.api.tool.HttpGetTool;
 import io.yunxi.mcp.api.tool.HttpPostTool;
 
@@ -46,7 +46,7 @@ import io.yunxi.mcp.api.tool.HttpPostTool;
  * @see io.yunxi.mcp.api.tool.HttpGetTool
  * @see io.yunxi.mcp.api.tool.HttpPostTool
  */
-public class ApiGatewayMcpServer extends AbstractMcpServer {
+public class ApiGatewayMcpServer extends AbstractStdioMcpServer {
 
     /**
      * 构造函数

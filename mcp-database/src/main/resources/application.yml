@@ -5,6 +5,11 @@ spring:
   application:
     name: yunxi-mcp-database
 
+mcp:
+  server:
+    name: yunxi-mcp-database
+    version: 2.0.0
+
   datasource:
     url: jdbc:mysql://${DB_HOST:192.168.10.153}:${DB_PORT:3306}/${DB_NAME:nutrition_zhaoxian}?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: ${DB_USERNAME:root}

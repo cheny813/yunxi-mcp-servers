@@ -1,8 +1,6 @@
 package io.yunxi.mcp.email.tool;
 
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 
@@ -80,24 +78,43 @@ public class EmailTools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("send_email")
-                    .description(
-                            "Send an email. " +
+
+        public String getName() {
+
+            return "send_email";
+
+        }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "Send an email. " +
                                     "发送电子邮件。 " +
                                     "Use this when you need to send notifications, alerts, reports, or any email communication. "
                                     +
                                     "适用于发送通知、警报、报告或任何邮件通信等场景。 " +
                                     "Common use cases: notifications, password reset, reports, alerts. " +
-                                    "典型用例：通知、密码重置、报告、警报。")
-                    .inputSchema(schema(
+                                    "典型用例：通知、密码重置、报告、警报。";
+
+        }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) schema(
                             "to", "string",
                             "Recipient email address. Example: 'user@example.com' | 收件人邮箱地址。示例: 'user@example.com'",
                             "subject", "string", "Email subject. Example: 'Welcome!' | 邮件主题。示例: '欢迎！'",
-                            "body", "string", "Email body content. Example: 'Hello, ...' | 邮件正文内容。示例: '您好，...'"))
-                    .build();
+                            "body", "string", "Email body content. Example: 'Hello, ...' | 邮件正文内容。示例: '您好，...'");
+
         }
+
 
         /**
          * 执行发送邮件操作
@@ -114,7 +131,7 @@ public class EmailTools {
          * @return 工具执行结果
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             String to = (String) args.get("to");
             String subject = (String) args.get("subject");
             String body = (String) args.get("body");
@@ -127,9 +144,9 @@ public class EmailTools {
                 message.setText(body);
 
                 mailSender.send(message);
-                return ToolResult.text("Email sent successfully to: " + to);
+                return ("Email sent successfully to: " + to);
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }

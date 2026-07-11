@@ -1,13 +1,12 @@
 package io.yunxi.mcp.memory.tool;
 
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import io.yunxi.mcp.memory.store.MemoryStats;
 import io.yunxi.mcp.memory.store.MemoryStoreInterface;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -74,30 +73,37 @@ public class MemoryAddTool implements ToolHandler {
      * @return 工具定义对象
      */
     @Override
-    public ToolDefinition getDefinition() {
-        return ToolDefinition.builder()
-                .name("memory_add")
-                .description("添加新的记忆条目到 MEMORY.md 或 USER.md（支持多用户隔离）")
-                .inputSchema(Map.of(
-                        "type", "object",
-                        "properties", Map.of(
-                                "userId", Map.of(
-                                        "type", "string",
-                                        "description", "用户ID（必填，用于多用户隔离）"),
-                                "target", Map.of(
-                                        "type", "string",
-                                        "description", "目标存储：'memory' 或 'user'",
-                                        "enum", new String[]{"memory", "user"}),
-                                "category", Map.of(
-                                        "type", "string",
-                                        "description", "记忆分类（如：preference, fact, instruction, experience）"),
-                                "content", Map.of(
-                                        "type", "string",
-                                        "description", "记忆内容")
-                        ),
-                        "required", new String[]{"userId", "target", "category", "content"}
-                ))
-                .build();
+    public String getName() {
+        return "memory_add";
+    }
+
+    @Override
+    public String getDescription() {
+        return "添加新的记忆条目到 MEMORY.md 或 USER.md（支持多用户隔离）";
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getInputSchema() {
+        return (Map<String, Object>) (Map) Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "userId", Map.of(
+                                "type", "string",
+                                "description", "用户ID（必填，用于多用户隔离）"),
+                        "target", Map.of(
+                                "type", "string",
+                                "description", "目标存储：'memory' 或 'user'",
+                                "enum", List.of("memory", "user")),
+                        "category", Map.of(
+                                "type", "string",
+                                "description", "记忆分类（如：preference, fact, instruction, experience）"),
+                        "content", Map.of(
+                                "type", "string",
+                                "description", "记忆内容")
+                ),
+                "required", List.of("userId", "target", "category", "content")
+        );
     }
 
     /**
@@ -116,7 +122,7 @@ public class MemoryAddTool implements ToolHandler {
      * @return 操作结果，包含成功信息或错误原因
      */
     @Override
-    public ToolResult execute(Map<String, Object> arguments) {
+    public String execute(Map<String, Object> arguments) {
         try {
             // 提取参数
             String userId = (String) arguments.get("userId");
@@ -126,16 +132,16 @@ public class MemoryAddTool implements ToolHandler {
 
             // 参数校验
             if (userId == null || userId.isBlank()) {
-                return ToolResult.error("参数 userId 不能为空（用于多用户隔离）");
+                throw new RuntimeException("参数 userId 不能为空（用于多用户隔离）");
             }
             if (target == null || target.isBlank()) {
-                return ToolResult.error("参数 target 不能为空");
+                throw new RuntimeException("参数 target 不能为空");
             }
             if (category == null || category.isBlank()) {
-                return ToolResult.error("参数 category 不能为空");
+                throw new RuntimeException("参数 category 不能为空");
             }
             if (content == null || content.isBlank()) {
-                return ToolResult.error("参数 content 不能为空");
+                throw new RuntimeException("参数 content 不能为空");
             }
 
             // 调用存储服务添加记忆
@@ -159,16 +165,16 @@ public class MemoryAddTool implements ToolHandler {
 
             log.info("Memory entry added: userId={}, target={}, category={}, entryId={}", userId, target, category, entryId);
 
-            return ToolResult.text(result.toString());
+            return result.toString();
 
         } catch (IllegalArgumentException e) {
             // 容量超限
             log.warn("Memory limit exceeded: {}", e.getMessage());
-            return ToolResult.error("记忆容量超限: " + e.getMessage());
+            throw new RuntimeException("记忆容量超限: " + e.getMessage());
         } catch (Exception e) {
             // 其他异常
             log.error("Failed to add memory entry", e);
-            return ToolResult.error("添加记忆失败: " + e.getMessage());
+            throw new RuntimeException("添加记忆失败: " + e.getMessage());
         }
     }
 }

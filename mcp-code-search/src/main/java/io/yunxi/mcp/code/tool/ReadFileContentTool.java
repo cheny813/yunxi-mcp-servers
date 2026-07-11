@@ -1,8 +1,8 @@
 package io.yunxi.mcp.code.tool;
 
+import org.springframework.stereotype.Component;
+
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import io.yunxi.mcp.code.service.CodeSearchService;
 
 import java.util.Map;
@@ -32,6 +32,7 @@ import java.util.Map;
  * @author yunxi-mcp-servers
  * @since 1.0.0
  */
+@Component
 public class ReadFileContentTool implements ToolHandler {
 
     /** 代码搜索服务 */
@@ -52,23 +53,27 @@ public class ReadFileContentTool implements ToolHandler {
      * @return 工具定义信息
      */
     @Override
-    public ToolDefinition getDefinition() {
-        return ToolDefinition.builder()
-                .name("read_file_content")
-                .description(
-                        "读取指定文件的内容。\n" +
-                                "根据相对路径读取代码文件内容，用于查看具体代码实现。\n" +
-                                "路径相对于代码搜索根目录。")
-                .inputSchema(Map.of(
-                        "type", "object",
-                        "properties", Map.of(
-                                "path", Map.of(
-                                        "type", "string",
-                                        "description", "文件相对路径，如 src/main/java/Service.java"),
-                                "maxLines", Map.of(
-                                        "type", "number",
-                                        "description", "最大读取行数，默认200"))))
-                .build();
+    public String getName() {
+        return "read_file_content";
+    }
+
+    @Override
+    public String getDescription() {
+        return "读取指定文件的内容。\n根据相对路径读取代码文件内容，用于查看具体代码实现。\n路径相对于代码搜索根目录。";
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getInputSchema() {
+        return (Map<String, Object>) (Map) Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "path", Map.of(
+                                "type", "string",
+                                "description", "文件相对路径，如 src/main/java/Service.java"),
+                        "maxLines", Map.of(
+                                "type", "number",
+                                "description", "最大读取行数，默认200")));
     }
 
     /**
@@ -78,11 +83,11 @@ public class ReadFileContentTool implements ToolHandler {
      * @return 工具执行结果
      */
     @Override
-    public ToolResult execute(Map<String, Object> arguments) {
+    public String execute(Map<String, Object> arguments) {
         String path = (String) arguments.get("path");
 
         if (path == null || path.isBlank()) {
-            return ToolResult.error("path is required");
+            throw new RuntimeException("path is required");
         }
 
         try {
@@ -95,9 +100,9 @@ public class ReadFileContentTool implements ToolHandler {
                 content += "\n\n... (省略 " + (lines.length - 200) + " 行)";
             }
 
-            return ToolResult.text("文件: " + path + "\n\n" + content);
+            return "文件: " + path + "\n\n" + content;
         } catch (Exception e) {
-            return ToolResult.error("读取文件失败: " + e.getMessage());
+            throw new RuntimeException("读取文件失败: " + e.getMessage());
         }
     }
 }

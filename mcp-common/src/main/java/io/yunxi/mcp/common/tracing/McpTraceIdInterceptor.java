@@ -1,7 +1,5 @@
 package io.yunxi.mcp.common.tracing;
 
-import io.yunxi.mcp.common.protocol.McpRequest;
-import io.yunxi.mcp.common.protocol.McpResponse;
 import org.slf4j.MDC;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpRequestExecution;

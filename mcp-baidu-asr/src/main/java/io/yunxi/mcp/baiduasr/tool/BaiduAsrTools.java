@@ -4,8 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.yunxi.mcp.baiduasr.BaiduAsrConfig;
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -144,31 +142,61 @@ public class BaiduAsrTools {
         }
 
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("baidu_asr")
-                    .description(
-                            "百度语音识别 (ASR) - 将音频转换为文字。" +
+
+
+        public String getName() {
+
+
+            return "baidu_asr";
+
+
+        }
+
+
+
+        @Override
+
+
+        public String getDescription() {
+
+
+            return "百度语音识别 (ASR) - 将音频转换为文字。" +
                                     "Convert audio to text. 支持 PCM WAV AMR 格式。 " +
-                                    "典型用例：语音转文字、音频文件转写、会议录音转写。")
-                    .inputSchema(BaiduAsrTools.schema(
+                                    "典型用例：语音转文字、音频文件转写、会议录音转写。";
+
+
+        }
+
+
+
+        @Override
+
+
+        @SuppressWarnings("unchecked")
+
+
+        public Map<String, Object> getInputSchema() {
+
+
+            return (Map<String, Object>) (Map) BaiduAsrTools.schema(
                             "audio", "string", "Base64 encoded audio data. 音频数据 (PCM/WAV/AMR)，Base64 编码。",
                             "format", "string", "Audio format: pcm, wav, amr. 音频格式，默认 pcm。",
                             "rate", "integer", "Sample rate: 8000 or 16000. 采样率，默认 16000。",
-                            "dev_pid", "string", "Model: 1537(普通话), 1737(英语), 1637(粤语), 1739(四川话). 识别模型，默认 1537。")
-                    )
-                    .build();
+                            "dev_pid", "string", "Model: 1537(普通话), 1737(英语), 1637(粤语), 1739(四川话). 识别模型，默认 1537。");
+
+
         }
 
+
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             String audio = (String) args.get("audio");
             String format = (String) args.getOrDefault("format", "pcm");
             Integer rate = args.containsKey("rate") ? ((Number) args.get("rate")).intValue() : 16000;
             String devPid = (String) args.getOrDefault("dev_pid", "1537");
 
             if (audio == null || audio.isBlank()) {
-                return ToolResult.error("Error: audio is required (Base64 encoded)");
+                throw new RuntimeException("Error: audio is required (Base64 encoded)");
             }
 
             return parent.recognize(audio, format, rate, devPid);
@@ -178,11 +206,11 @@ public class BaiduAsrTools {
     /**
      * 执行语音识别
      */
-    private ToolResult recognize(String audio, String format, int rate, String devPid) {
+    private String recognize(String audio, String format, int rate, String devPid) {
         try {
             String token = getAccessToken();
             if (token == null) {
-                return ToolResult.error("Error: Failed to get access token");
+                throw new RuntimeException("Error: Failed to get access token");
             }
 
             // 解析 Base64 音频数据
@@ -190,7 +218,7 @@ public class BaiduAsrTools {
             try {
                 audioBytes = Base64.getDecoder().decode(audio);
             } catch (IllegalArgumentException e) {
-                return ToolResult.error("Error: Invalid Base64 audio data");
+                throw new RuntimeException("Error: Invalid Base64 audio data");
             }
 
             String devPidFinal = config.getDevPid();
@@ -222,7 +250,7 @@ public class BaiduAsrTools {
 
             if (response.statusCode() != 200) {
                 log.error("ASR API error: status={}, body={}", response.statusCode(), response.body());
-                return ToolResult.error("Error: API request failed with status " + response.statusCode());
+                throw new RuntimeException("Error: API request failed with status " + response.statusCode());
             }
 
             JsonNode root = objectMapper.readTree(response.body());
@@ -232,14 +260,14 @@ public class BaiduAsrTools {
                 int errNo = root.get("err_no").asInt();
                 if (errNo != 0) {
                     String errMsg = root.has("err_msg") ? root.get("err_msg").asText() : "Unknown error";
-                    return ToolResult.error("Error [" + errNo + "]: " + errMsg);
+                    throw new RuntimeException("Error [" + errNo + "]: " + errMsg);
                 }
             }
 
             // 解析结果
             JsonNode result = root.get("result");
             if (result == null || result.isEmpty()) {
-                return ToolResult.text("No speech recognized.");
+                return ("No speech recognized.");
             }
 
             StringBuilder sb = new StringBuilder();
@@ -255,11 +283,11 @@ public class BaiduAsrTools {
                 sb.append("\n\n📊 置信度: ").append(root.get("confidence").asText());
             }
 
-            return ToolResult.text(sb.toString());
+            return (sb.toString());
 
         } catch (Exception e) {
             log.error("ASR error: {}", e.getMessage(), e);
-            return ToolResult.error("Error: " + e.getMessage());
+            throw new RuntimeException("Error: " + e.getMessage());
         }
     }
 

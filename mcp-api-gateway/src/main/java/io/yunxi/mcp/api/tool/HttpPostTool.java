@@ -2,8 +2,6 @@ package io.yunxi.mcp.api.tool;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import okhttp3.*;
 
 import java.util.*;
@@ -86,25 +84,32 @@ public class HttpPostTool implements ToolHandler {
      * @return 工具定义对象
      */
     @Override
-    public ToolDefinition getDefinition() {
-        return ToolDefinition.builder()
-                .name("http_post")
-                .description("Make an HTTP POST request with JSON body and return the response")
-                .inputSchema(Map.of(
-                        "type", "object",
-                        "properties", Map.of(
-                                "url", Map.of(
-                                        "type", "string",
-                                        "description", "URL to request"),
-                                "body", Map.of(
-                                        "type", "object",
-                                        "description", "Request body (JSON object)"),
-                                "headers", Map.of(
-                                        "type", "object",
-                                        "description", "Request headers (optional)",
-                                        "additionalProperties", Map.of("type", "string"))),
-                        "required", List.of("url")))
-                .build();
+    public String getName() {
+        return "http_post";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Make an HTTP POST request with JSON body and return the response";
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getInputSchema() {
+        return (Map<String, Object>) (Map) Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "url", Map.of(
+                                "type", "string",
+                                "description", "URL to request"),
+                        "body", Map.of(
+                                "type", "object",
+                                "description", "Request body (JSON object)"),
+                        "headers", Map.of(
+                                "type", "object",
+                                "description", "Request headers (optional)",
+                                "additionalProperties", Map.of("type", "string"))),
+                "required", List.of("url"));
     }
 
     /**
@@ -133,13 +138,13 @@ public class HttpPostTool implements ToolHandler {
      */
     @Override
     @SuppressWarnings("unchecked")
-    public ToolResult execute(Map<String, Object> arguments) {
+    public String execute(Map<String, Object> arguments) {
         // 从参数中提取 URL
         String url = (String) arguments.get("url");
 
         // 验证 URL 是否存在
         if (url == null || url.isBlank()) {
-            return ToolResult.error("URL is required");
+            throw new RuntimeException("URL is required");
         }
 
         try {
@@ -180,11 +185,11 @@ public class HttpPostTool implements ToolHandler {
                         .append(header.getSecond()).append("\n"));
                 sb.append("\nBody:\n").append(body);
 
-                return ToolResult.text(sb.toString());
+                return sb.toString();
             }
         } catch (Exception e) {
             // 捕获所有异常并返回错误信息
-            return ToolResult.error("HTTP Error: " + e.getMessage());
+            throw new RuntimeException("HTTP Error: " + e.getMessage());
         }
     }
 }

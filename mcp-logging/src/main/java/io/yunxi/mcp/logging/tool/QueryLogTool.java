@@ -1,8 +1,8 @@
 package io.yunxi.mcp.logging.tool;
 
+import org.springframework.stereotype.Component;
+
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import io.yunxi.mcp.logging.service.LogQueryService;
 
 import java.util.List;
@@ -38,6 +38,7 @@ import java.util.Map;
  * @since 1.0.0
  * @see LogQueryService
  */
+@Component
 public class QueryLogTool implements ToolHandler {
 
         /**
@@ -62,37 +63,38 @@ public class QueryLogTool implements ToolHandler {
          *
          * @return 工具定义对象
          */
-        @Override
-        public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                                .name("query_logs")
-                                .description(
-                                                "查询应用日志。\n" +
-                                                                "根据关键词、日志级别、时间范围搜索日志内容。\n" +
-                                                                "用于诊断系统问题、查看错误信息、追踪业务流程。")
-                                .inputSchema(Map.of(
-                                                "type", "object",
-                                                "properties", Map.of(
-                                                                "keyword", Map.of(
-                                                                                "type", "string",
-                                                                                "description", "日志关键词，可选"),
-                                                                "level", Map.of(
-                                                                                "type", "string",
-                                                                                "description",
-                                                                                "日志级别: ERROR, WARN, INFO, DEBUG"),
-                                                                "startTime", Map.of(
-                                                                                "type", "string",
-                                                                                "description",
-                                                                                "开始时间 (yyyy-MM-dd HH:mm:ss)"),
-                                                                "endTime", Map.of(
-                                                                                "type", "string",
-                                                                                "description",
-                                                                                "结束时间 (yyyy-MM-dd HH:mm:ss)"),
-                                                                "maxLines", Map.of(
-                                                                                "type", "number",
-                                                                                "description", "最大返回行数，默认100"))))
-                                .build();
-        }
+    @Override
+    public String getName() {
+        return "query_logs";
+    }
+
+    @Override
+    public String getDescription() {
+        return "查询应用日志。\n根据关键词、日志级别、时间范围搜索日志内容。\n用于诊断系统问题、查看错误信息、追踪业务流程。";
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getInputSchema() {
+        return (Map<String, Object>) (Map) Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "keyword", Map.of(
+                                "type", "string",
+                                "description", "日志关键词，可选"),
+                        "level", Map.of(
+                                "type", "string",
+                                "description", "日志级别: ERROR, WARN, INFO, DEBUG"),
+                        "startTime", Map.of(
+                                "type", "string",
+                                "description", "开始时间 (yyyy-MM-dd HH:mm:ss)"),
+                        "endTime", Map.of(
+                                "type", "string",
+                                "description", "结束时间 (yyyy-MM-dd HH:mm:ss)"),
+                        "maxLines", Map.of(
+                                "type", "number",
+                                "description", "最大返回行数，默认100")));
+    }
 
         /**
          * 执行日志查询
@@ -104,7 +106,7 @@ public class QueryLogTool implements ToolHandler {
          * @return 查询结果，包含匹配的日志列表或错误信息
          */
         @Override
-        public ToolResult execute(Map<String, Object> arguments) {
+        public String execute(Map<String, Object> arguments) {
                 String keyword = (String) arguments.get("keyword");
                 String level = (String) arguments.get("level");
                 String startTime = (String) arguments.get("startTime");
@@ -117,7 +119,7 @@ public class QueryLogTool implements ToolHandler {
                         List<String> logs = logQueryService.queryLogs(keyword, level, startTime, endTime, maxLines);
 
                         if (logs.isEmpty()) {
-                                return ToolResult.text("未找到匹配条件的日志");
+                                return "未找到匹配条件的日志";
                         }
 
                         StringBuilder sb = new StringBuilder();
@@ -126,9 +128,9 @@ public class QueryLogTool implements ToolHandler {
                                 sb.append(log).append("\n");
                         }
 
-                        return ToolResult.text(sb.toString());
+                        return sb.toString();
                 } catch (Exception e) {
-                        return ToolResult.error("查询日志失败: " + e.getMessage());
+                        throw new RuntimeException("查询日志失败: " + e.getMessage());
                 }
         }
 }

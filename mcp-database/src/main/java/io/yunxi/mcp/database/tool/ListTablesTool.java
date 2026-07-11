@@ -1,8 +1,7 @@
 package io.yunxi.mcp.database.tool;
 
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
+import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -10,26 +9,14 @@ import java.util.*;
 
 /**
  * 列出数据库表工具
- * <p>
- * 工具名称: {@code list_tables}
- * </p>
- * <p>
- * 列出当前数据库中的所有表，支持按 schema 过滤。
- * 用于探索数据库结构、发现可用表或理解数据模型。
- * </p>
  *
  * @author yunxi
- * @version 1.0.0
+ * @version 2.0.0
  * @since 1.0.0
  */
+@Component
 public class ListTablesTool implements ToolHandler {
 
-    /**
-     * 数据源
-     * <p>
-     * 用于获取数据库连接和元数据信息。
-     * </p>
-     */
     private final DataSource dataSource;
 
     public ListTablesTool(DataSource dataSource) {
@@ -37,29 +24,33 @@ public class ListTablesTool implements ToolHandler {
     }
 
     @Override
-    public ToolDefinition getDefinition() {
-        return ToolDefinition.builder()
-                .name("list_tables")
-                .description(
-                        "List all tables in the database. " +
-                                "列出数据库中的所有表。 " +
-                                "Use this when you need to explore database structure, discover available tables, or understand the data model. "
-                                +
-                                "适用于探索数据库结构、发现可用表或理解数据模型等场景。 " +
-                                "Common use cases: database exploration, schema discovery, documentation. " +
-                                "典型用例：数据库探索、模式发现、文档编写。")
-                .inputSchema(Map.of(
-                        "type", "object",
-                        "properties", Map.of(
-                                "schema", Map.of(
-                                        "type", "string",
-                                        "description", "Database schema name (optional). Example: 'public', 'dbo' | " +
-                                                "数据库模式名称（可选）。示例: 'public', 'dbo'"))))
-                .build();
+    public String getName() {
+        return "list_tables";
     }
 
     @Override
-    public ToolResult execute(Map<String, Object> arguments) {
+    public String getDescription() {
+        return "List all tables in the database. " +
+                "列出数据库中的所有表。 " +
+                "Use this when you need to explore database structure, discover available tables, or understand the data model. " +
+                "适用于探索数据库结构、发现可用表或理解数据模型等场景。 " +
+                "Common use cases: database exploration, schema discovery, documentation. " +
+                "典型用例：数据库探索、模式发现、文档编写。";
+    }
+
+    @Override
+    public Map<String, Object> getInputSchema() {
+        return Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "schema", Map.of(
+                                "type", "string",
+                                "description", "Database schema name (optional). Example: 'public', 'dbo' | " +
+                                        "数据库模式名称（可选）。示例: 'public', 'dbo'")));
+    }
+
+    @Override
+    public String execute(Map<String, Object> arguments) {
         String schema = (String) arguments.get("schema");
 
         try (Connection conn = dataSource.getConnection()) {
@@ -88,9 +79,9 @@ public class ListTablesTool implements ToolHandler {
                 sb.append("\n");
             }
 
-            return ToolResult.text(sb.toString());
+            return sb.toString();
         } catch (SQLException e) {
-            return ToolResult.error("Database Error: " + e.getMessage());
+            throw new RuntimeException("Database Error: " + e.getMessage());
         }
     }
 }

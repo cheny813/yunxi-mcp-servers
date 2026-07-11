@@ -4,8 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.yunxi.mcp.dingtalk.DingTalkConfig;
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -71,25 +69,55 @@ public class DingTalkTools {
         }
 
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("dingtalk_send_text")
-                    .description(
-                            "发送钉钉文本消息 (Send Text) - 向钉钉群或用户发送文本消息。" +
-                                    "典型用例：告警通知、任务提醒、系统状态通知。")
-                    .inputSchema(DingTalkTools.schema(
-                            "content", "string", "Message content. 消息内容。",
-                            "atMobiles", "array", "Phone numbers to @. @被唤醒的手机号列表 (可选)。",
-                            "isAtAll", "boolean", "Whether to @all. 是否 @所有人，默认 false。")
-                    )
-                    .build();
+
+
+        public String getName() {
+
+
+            return "dingtalk_send_text";
+
+
         }
 
+
+
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+
+
+        public String getDescription() {
+
+
+            return "发送钉钉文本消息 (Send Text) - 向钉钉群或用户发送文本消息。" +
+                                    "典型用例：告警通知、任务提醒、系统状态通知。";
+
+
+        }
+
+
+
+        @Override
+
+
+        @SuppressWarnings("unchecked")
+
+
+        public Map<String, Object> getInputSchema() {
+
+
+            return (Map<String, Object>) (Map) DingTalkTools.schema(
+                            "content", "string", "Message content. 消息内容。",
+                            "atMobiles", "array", "Phone numbers to @. @被唤醒的手机号列表 (可选)。",
+                            "isAtAll", "boolean", "Whether to @all. 是否 @所有人，默认 false。");
+
+
+        }
+
+
+        @Override
+        public String execute(Map<String, Object> args) {
             String content = (String) args.get("content");
             if (content == null || content.isBlank()) {
-                return ToolResult.error("Error: content is required");
+                throw new RuntimeException("Error: content is required");
             }
 
             @SuppressWarnings("unchecked")
@@ -112,32 +140,62 @@ public class DingTalkTools {
         }
 
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("dingtalk_send_markdown")
-                    .description(
-                            "发送钉钉 Markdown 消息 (Send Markdown) - 发送富格式 Markdown 消息。" +
+
+
+        public String getName() {
+
+
+            return "dingtalk_send_markdown";
+
+
+        }
+
+
+
+        @Override
+
+
+        public String getDescription() {
+
+
+            return "发送钉钉 Markdown 消息 (Send Markdown) - 发送富格式 Markdown 消息。" +
                                     "支持标题、列表、代码、链接等。" +
-                                    "典型用例：详细告警信息、报告摘要、状态面板。")
-                    .inputSchema(DingTalkTools.schema(
+                                    "典型用例：详细告警信息、报告摘要、状态面板。";
+
+
+        }
+
+
+
+        @Override
+
+
+        @SuppressWarnings("unchecked")
+
+
+        public Map<String, Object> getInputSchema() {
+
+
+            return (Map<String, Object>) (Map) DingTalkTools.schema(
                             "title", "string", "Message title. 消息标题。",
                             "text", "string", "Markdown content. Markdown 格式的消息内容。",
                             "atMobiles", "array", "Phone numbers to @. @被唤醒的手机号列表 (可选)。",
-                            "isAtAll", "boolean", "Whether to @all. 是否 @所有人。")
-                    )
-                    .build();
+                            "isAtAll", "boolean", "Whether to @all. 是否 @所有人。");
+
+
         }
 
+
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             String title = (String) args.get("title");
             String text = (String) args.get("text");
 
             if (title == null || title.isBlank()) {
-                return ToolResult.error("Error: title is required");
+                throw new RuntimeException("Error: title is required");
             }
             if (text == null || text.isBlank()) {
-                return ToolResult.error("Error: text is required");
+                throw new RuntimeException("Error: text is required");
             }
 
             @SuppressWarnings("unchecked")
@@ -160,36 +218,66 @@ public class DingTalkTools {
         }
 
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("dingtalk_send_link")
-                    .description(
-                            "发送钉钉链接消息 (Send Link) - 发送带有链接的消息卡片。" +
-                                    "典型用例：点击查看详情、外部系统链接。")
-                    .inputSchema(DingTalkTools.schema(
+
+
+        public String getName() {
+
+
+            return "dingtalk_send_link";
+
+
+        }
+
+
+
+        @Override
+
+
+        public String getDescription() {
+
+
+            return "发送钉钉链接消息 (Send Link) - 发送带有链接的消息卡片。" +
+                                    "典型用例：点击查看详情、外部系统链接。";
+
+
+        }
+
+
+
+        @Override
+
+
+        @SuppressWarnings("unchecked")
+
+
+        public Map<String, Object> getInputSchema() {
+
+
+            return (Map<String, Object>) (Map) DingTalkTools.schema(
                             "title", "string", "Message title. 消息标题。",
                             "text", "string", "Content summary. 内容摘要。",
                             "url", "string", "Link URL. 跳转链接。",
-                            "picUrl", "string", "Image URL (optional). 图片链接，可为空。")
-                    )
-                    .build();
+                            "picUrl", "string", "Image URL (optional). 图片链接，可为空。");
+
+
         }
 
+
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             String title = (String) args.get("title");
             String text = (String) args.get("text");
             String url = (String) args.get("url");
             String picUrl = (String) args.get("picUrl");
 
             if (title == null || title.isBlank()) {
-                return ToolResult.error("Error: title is required");
+                throw new RuntimeException("Error: title is required");
             }
             if (text == null || text.isBlank()) {
-                return ToolResult.error("Error: text is required");
+                throw new RuntimeException("Error: text is required");
             }
             if (url == null || url.isBlank()) {
-                return ToolResult.error("Error: url is required");
+                throw new RuntimeException("Error: url is required");
             }
 
             return parent.sendLink(title, text, url, picUrl);
@@ -199,7 +287,7 @@ public class DingTalkTools {
     /**
      * 发送文本消息
      */
-    public ToolResult sendText(String content, java.util.List<String> atMobiles, boolean isAtAll) {
+    public String sendText(String content, java.util.List<String> atMobiles, boolean isAtAll) {
         try {
             String webhook = getWebhook();
 
@@ -220,14 +308,14 @@ public class DingTalkTools {
             return sendMessage(webhook, requestBody);
         } catch (Exception e) {
             log.error("Send text error: {}", e.getMessage(), e);
-            return ToolResult.error("Error: " + e.getMessage());
+            throw new RuntimeException("Error: " + e.getMessage());
         }
     }
 
     /**
      * 发送 Markdown 消息
      */
-    public ToolResult sendMarkdown(String title, String text, java.util.List<String> atMobiles, boolean isAtAll) {
+    public String sendMarkdown(String title, String text, java.util.List<String> atMobiles, boolean isAtAll) {
         try {
             String webhook = getWebhook();
 
@@ -249,14 +337,14 @@ public class DingTalkTools {
             return sendMessage(webhook, requestBody);
         } catch (Exception e) {
             log.error("Send markdown error: {}", e.getMessage(), e);
-            return ToolResult.error("Error: " + e.getMessage());
+            throw new RuntimeException("Error: " + e.getMessage());
         }
     }
 
     /**
      * 发送链接消息
      */
-    public ToolResult sendLink(String title, String text, String url, String picUrl) {
+    public String sendLink(String title, String text, String url, String picUrl) {
         try {
             String webhook = getWebhook();
 
@@ -275,7 +363,7 @@ public class DingTalkTools {
             return sendMessage(webhook, requestBody);
         } catch (Exception e) {
             log.error("Send link error: {}", e.getMessage(), e);
-            return ToolResult.error("Error: " + e.getMessage());
+            throw new RuntimeException("Error: " + e.getMessage());
         }
     }
 
@@ -296,7 +384,7 @@ public class DingTalkTools {
     /**
      * 发送消息
      */
-    private ToolResult sendMessage(String webhook, Map<String, Object> requestBody) {
+    private String sendMessage(String webhook, Map<String, Object> requestBody) {
         try {
             String url = webhook;
             String secret = config.getSecret();
@@ -325,14 +413,14 @@ public class DingTalkTools {
 
             if (root.has("errcode") && root.get("errcode").asInt() != 0) {
                 String errMsg = root.has("errmsg") ? root.get("errmsg").asText() : "Unknown error";
-                return ToolResult.error("Error: " + errMsg);
+                throw new RuntimeException("Error: " + errMsg);
             }
 
-            return ToolResult.text("✅ 钉钉消息发送成功");
+            return ("✅ 钉钉消息发送成功");
 
         } catch (Exception e) {
             log.error("Send message error: {}", e.getMessage(), e);
-            return ToolResult.error("Error: " + e.getMessage());
+            throw new RuntimeException("Error: " + e.getMessage());
         }
     }
 

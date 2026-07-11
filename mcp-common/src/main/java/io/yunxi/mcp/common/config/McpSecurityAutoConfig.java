@@ -10,9 +10,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * MCP 安全配置自动装配
+ * MCP 安全配置自动装配 (v2.0)
  * <p>
- * 自动配置 MCP 认证过滤器
+ * 适配官方 MCP SDK 的 SSE 端点路径：
+ * <ul>
+ * <li>{@code /mcp/sse} - SSE 连接建立</li>
+ * <li>{@code /mcp/message} - JSON-RPC 消息端点</li>
+ * </ul>
  *
  * @since 1.0.0
  */
@@ -24,7 +28,7 @@ public class McpSecurityAutoConfig {
     /**
      * 注册 MCP 认证过滤器
      * <p>
-     * 过滤器顺序：在 Spring Security 之后执行
+     * 拦截官方 MCP SDK 的 SSE 端点路径
      */
     @Bean
     @ConditionalOnProperty(prefix = "mcp.auth", name = "enabled", havingValue = "true")
@@ -32,7 +36,7 @@ public class McpSecurityAutoConfig {
         FilterRegistrationBean<McpAuthFilter> registration = new FilterRegistrationBean<>();
         registration.setFilter(filter);
         registration.addUrlPatterns("/mcp/*");
-        registration.setOrder(100);  // 在 Spring Security 过滤器之后
+        registration.setOrder(100);
         registration.setName("mcpAuthFilter");
         return registration;
     }

@@ -2,8 +2,6 @@ package io.yunxi.mcp.pagegen.tool;
 
 import io.yunxi.mcp.pagegen.service.PageGenService;
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -37,11 +35,30 @@ public class PageGenTools {
     public ToolHandler generateDashboard() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("pagegen_dashboard")
-                        .description("生成统计仪表板页面。创建包含 KPI 卡片、图表和数据展示的数据可视化仪表板。")
-                        .inputSchema(Map.of(
+
+            public String getName() {
+
+                return "pagegen_dashboard";
+
+            }
+
+
+            @Override
+
+            public String getDescription() {
+
+                return "生成统计仪表板页面。创建包含 KPI 卡片、图表和数据展示的数据可视化仪表板。";
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of(
                                 "type", "object",
                                 "properties", Map.of(
                                         "title", Map.of(
@@ -75,18 +92,19 @@ public class PageGenTools {
                                                                 Map.of("type", "string", "description", "图表标题"),
                                                                 "data",
                                                                 Map.of("type", "object", "description", "图表数据"))))),
-                                "required", List.of("title")))
-                        .build();
+                                "required", List.of("title"));
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+            public String execute(Map<String, Object> arguments) {
                 try {
                     String html = pageGenService.generateDashboard(arguments);
-                    return ToolResult.text("仪表板页面生成成功！HTML 长度: " + html.length() + " 字符");
+                    return ("仪表板页面生成成功！HTML 长度: " + html.length() + " 字符");
                 } catch (Exception e) {
                     log.error("生成仪表板页面失败", e);
-                    return ToolResult.error("生成失败: " + e.getMessage());
+                    throw new RuntimeException("生成失败: " + e.getMessage());
                 }
             }
         };
@@ -95,11 +113,30 @@ public class PageGenTools {
     public ToolHandler generateList() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("pagegen_list")
-                        .description("生成数据列表页面。创建包含表格、搜索和分页功能的数据展示页面。")
-                        .inputSchema(Map.of(
+
+            public String getName() {
+
+                return "pagegen_list";
+
+            }
+
+
+            @Override
+
+            public String getDescription() {
+
+                return "生成数据列表页面。创建包含表格、搜索和分页功能的数据展示页面。";
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of(
                                 "type", "object",
                                 "properties", Map.of(
                                         "title", Map.of(
@@ -122,18 +159,19 @@ public class PageGenTools {
                                         "data", Map.of(
                                                 "type", "array",
                                                 "description", "表格数据行，每行是一个对象，键为字段名，值为数据")),
-                                "required", List.of("title", "columns")))
-                        .build();
+                                "required", List.of("title", "columns"));
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+            public String execute(Map<String, Object> arguments) {
                 try {
                     String html = pageGenService.generateListPage(arguments);
-                    return ToolResult.text("列表页面生成成功！HTML 长度: " + html.length() + " 字符");
+                    return ("列表页面生成成功！HTML 长度: " + html.length() + " 字符");
                 } catch (Exception e) {
                     log.error("生成列表页面失败", e);
-                    return ToolResult.error("生成失败: " + e.getMessage());
+                    throw new RuntimeException("生成失败: " + e.getMessage());
                 }
             }
         };
@@ -142,11 +180,30 @@ public class PageGenTools {
     public ToolHandler generateDetail() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("pagegen_detail")
-                        .description("生成详情页面。创建展示单个实体详细信息的数据详情页面。")
-                        .inputSchema(Map.of(
+
+            public String getName() {
+
+                return "pagegen_detail";
+
+            }
+
+
+            @Override
+
+            public String getDescription() {
+
+                return "生成详情页面。创建展示单个实体详细信息的数据详情页面。";
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of(
                                 "type", "object",
                                 "properties", Map.of(
                                         "title", Map.of(
@@ -159,18 +216,19 @@ public class PageGenTools {
                                         "related_data", Map.of(
                                                 "type", "array",
                                                 "description", "关联数据列表，用于展示与实体相关的其他信息")),
-                                "required", List.of("title", "entity")))
-                        .build();
+                                "required", List.of("title", "entity"));
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+            public String execute(Map<String, Object> arguments) {
                 try {
                     String html = pageGenService.generateDetailPage(arguments);
-                    return ToolResult.text("详情页面生成成功！HTML 长度: " + html.length() + " 字符");
+                    return ("详情页面生成成功！HTML 长度: " + html.length() + " 字符");
                 } catch (Exception e) {
                     log.error("生成详情页面失败", e);
-                    return ToolResult.error("生成失败: " + e.getMessage());
+                    throw new RuntimeException("生成失败: " + e.getMessage());
                 }
             }
         };

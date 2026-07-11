@@ -18,9 +18,12 @@ MCP (Model Context Protocol) 服务器实现集合，为 AI Agent 提供工具�
 
 ## 一、项目简介
 
-所有 HTTP 模式的 MCP 服务器同时支持两种传输方式：
-- **HTTP** - 传统的 POST 请求/响应模式
-- **SSE** - Server-Sent Events 远程调用模式
+MCP 服务器按部署模式分为两类：
+
+- **HTTP/SSE 模式**（基于 Spring + 官方 MCP SDK 的 SSE 传输）：通过 `GET /mcp/sse` 建立 SSE 连接，`POST /mcp/message` 发送 JSON-RPC 消息。工具由 `McpServerFactory` 自动发现并注册。
+- **Stdio 模式**（无 Spring 依赖，基于 `AbstractStdioMcpServer`）：通过标准输入输出与宿主进程通信，适用于作为本地子进程被 Agent 框架拉起（如 `mcp-database-stdio`、`mcp-api-gateway`）。
+
+> v2.0 统一使用官方 MCP Java SDK 0.17.0 的 SSE 传输，**不再提供独立的 `POST /mcp` 请求/响应端点**。Stdio 模式仅通过 stdin/stdout 通信。
 
 ### 项目结构
 
@@ -182,13 +185,15 @@ netstat -tuln | grep 40
 
 ### mcp-common
 
-MCP 协议的公共实现，包含：
+MCP 协议的公共实现（**v2.0，基于官方 MCP Java SDK 0.17.0**），包含：
 
-- `McpRequest` / `McpResponse` - JSON-RPC 2.0 请求/响应
-- `ToolDefinition` - 工具定义
-- `ToolResult` - 工具执行结果
-- `ToolHandler` - 工具处理器接口
-- `AbstractMcpServer` - MCP 服务器抽象基类
+- `ToolHandler` - 工具处理器接口（`getName` / `getDescription` / `getInputSchema` / `execute`）
+- `McpServerFactory` - HTTP/SSE 模式服务器工厂（Spring 自动发现所有 `ToolHandler` Bean 并注册）
+- `AbstractStdioMcpServer` - Stdio 模式服务器抽象基类（`registerTool` + `start`）
+- `ToolResult` - 兼容 shim（`text` / `error` 静态方法返回 `String`，仅用于向后兼容）
+- `io.modelcontextprotocol.sdk:mcp` / `mcp-core` / `mcp-json-jackson2` - 官方 MCP SDK 依赖
+
+> 注意：v1.0 的自定义类 `ToolDefinition`、`ToolResult`（v1 模型）、`McpRequest`、`McpResponse`、`AbstractMcpServer` 已在 v2.0 中移除，改由官方 SDK 的 `McpSchema.Tool`、`JsonSchema`、`CallToolResult` 承载。
 
 ### mcp-database-stdio
 
@@ -663,25 +668,39 @@ agentscope:
 
 ```java
 @Override
-public ToolDefinition getDefinition() {
-    return ToolDefinition.builder()
-            .name("tool_name")  // 动词+名词
-            .description(
-                "[功能描述]. " +
-                "Use this when you need to: [场景1], [场景2], [场景3]. " +
-                "适用于：[场景1]、[场景2]、[场景3]等场景。"
+public String getName() {
+    return "tool_name";  // 动词+名词
+}
+
+@Override
+public String getDescription() {
+    return "[功能描述]. " +
+           "Use this when you need to: [场景1], [场景2], [场景3]. " +
+           "适用于：[场景1]、[场景2]、[场景3]等场景。";
+}
+
+@Override
+public Map<String, Object> getInputSchema() {
+    return Map.of(
+        "type", "object",
+        "properties", Map.of(
+            "param1", Map.of(
+                "type", "string",
+                "description", "参数用途. Example: '示例值'"
             )
-            .inputSchema(Map.of(
-                "type", "object",
-                "properties", Map.of(
-                    "param1", Map.of(
-                        "type", "string",
-                        "description", "参数用途. Example: '示例值'"
-                    )
-                ),
-                "required", List.of("param1")
-            ))
-            .build();
+        ),
+        "required", List.of("param1")
+    );
+}
+
+@Override
+public String execute(Map<String, Object> arguments) {
+    String param1 = (String) arguments.get("param1");
+    // 执行失败直接抛出 RuntimeException，框架自动包装为 isError=true
+    if (param1 == null) {
+        throw new RuntimeException("param1 is required");
+    }
+    return "Result: " + param1;
 }
 ```
 
@@ -689,30 +708,25 @@ public ToolDefinition getDefinition() {
 
 #### 查看工具列表
 
-```bash
-curl http://localhost:8080/tools
-```
+v2.0 使用官方 MCP SDK 的 SSE 传输，工具列表通过 MCP `tools/list` 协议方法获取（无独立的 HTTP `/tools` GET 端点）。可通过支持 MCP 的客户端（如 Agent 框架、MCP Inspector）连接 `http://localhost:PORT/mcp/sse` 后调用 `tools/list`，或在日志中观察 `McpServerFactory` 启动时打印的 `注册 MCP 工具: <name>`。
 
 #### 检查返回格式
 
-期望输出：
+`tools/list` 返回的工具结构（对应官方 SDK `McpSchema.Tool` / `JsonSchema`）：
 ```json
 {
-  "tools": [
-    {
-      "name": "set",
-      "description": "Set key-value pair in Redis...",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string",
-            "description": "The Redis key to set. Example: 'user:001'"
-          }
-        }
+  "name": "set",
+  "description": "Set key-value pair in Redis...",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "key": {
+        "type": "string",
+        "description": "The Redis key to set. Example: 'user:001'"
       }
-    }
-  ]
+    },
+    "required": ["key"]
+  }
 }
 ```
 
@@ -728,50 +742,85 @@ curl http://localhost:8080/tools
 
 ## 六、开发自定义 MCP Server
 
-### 6.1 创建工具处理器
+v2.0 基于官方 MCP Java SDK 0.17.0，工具统一实现 `ToolHandler` 接口。根据部署模式分为两类。
+
+### 6.1 创建工具处理器（两种模式通用）
+
+实现 `io.yunxi.mcp.common.handler.ToolHandler` 接口，四个方法：
 
 ```java
 public class MyTool implements ToolHandler {
-    
+
     @Override
-    public ToolDefinition getDefinition() {
-        return ToolDefinition.builder()
-                .name("my_tool")
-                .description("My custom tool")
-                .inputSchema(Map.of(
-                        "type", "object",
-                        "properties", Map.of(
-                                "input", Map.of("type", "string")
-                        )
-                ))
-                .build();
+    public String getName() {
+        return "my_tool";
     }
-    
+
     @Override
-    public ToolResult execute(Map<String, Object> arguments) {
+    public String getDescription() {
+        return "My custom tool";
+    }
+
+    @Override
+    public Map<String, Object> getInputSchema() {
+        return Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "input", Map.of("type", "string")
+                ),
+                "required", List.of("input")
+        );
+    }
+
+    @Override
+    public String execute(Map<String, Object> arguments) {
         String input = (String) arguments.get("input");
-        return ToolResult.text("Result: " + input);
+        return "Result: " + input;   // 执行失败可抛出 RuntimeException
     }
 }
 ```
 
-### 6.2 创建 MCP 服务器
+### 6.2 模式一：HTTP/SSE 模式（Spring 自动装配）
+
+HTTP/SSE 模块依赖 Spring。`ToolHandler` 标注 `@Component` 后，`McpServerFactory` 会自动发现并注册所有工具，传输层使用官方 SDK 的 SSE（`/mcp/sse` + `/mcp/message`）。
 
 ```java
-public class MyMcpServer extends AbstractMcpServer {
-    
-    public MyMcpServer() {
-        super("my-mcp-server", "1.0.0");
+@Component                       // 标注为 Spring Bean
+public class MyTool implements ToolHandler { /* ... 同上 ... */ }
+```
+
+```yaml
+# application.yml
+mcp:
+  server:
+    name: yunxi-mcp-my
+    version: 1.0.0
+server:
+  port: 40199
+```
+
+启动后端点：
+- SSE: `GET http://localhost:40199/mcp/sse`（消息端点 `/mcp/message`）
+
+### 6.3 模式二：Stdio 模式（无 Spring 依赖）
+
+Stdio 模块继承 `AbstractStdioMcpServer`，在构造器中 `registerTool` 并调用 `start()`，由 JVM 通过标准输入输出与宿主通信。
+
+```java
+public class MyMcpServer extends AbstractStdioMcpServer {
+
+    public MyMcpServer(String name, String version) {
+        super(name, version);
         registerTool(new MyTool());
     }
-    
+
     public static void main(String[] args) {
-        new MyMcpServer().start();
+        new MyMcpServer("my-mcp-server", "1.0.0").start();
     }
 }
 ```
 
-### 6.3 打包运行
+### 6.4 打包运行
 
 ```bash
 mvn clean package

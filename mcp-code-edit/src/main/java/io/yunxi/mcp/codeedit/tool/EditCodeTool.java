@@ -1,10 +1,11 @@
 package io.yunxi.mcp.codeedit.tool;
 
+import org.springframework.stereotype.Component;
+
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import io.yunxi.mcp.codeedit.service.CodeEditService;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -38,6 +39,7 @@ import java.util.Map;
  * @see CodeEditService
  * @since 1.0.0
  */
+@Component
 public class EditCodeTool implements ToolHandler {
 
     /**
@@ -63,35 +65,34 @@ public class EditCodeTool implements ToolHandler {
      * @return 工具定义对象
      */
     @Override
-    public ToolDefinition getDefinition() {
-        return ToolDefinition.builder()
-                .name("edit_code")
-                .description(
-                        "编辑代码文件（带安全保护）。\n" +
-                                "通过字符串替换方式修改代码文件。\n" +
-                                "安全措施：\n" +
-                                "- 自动 UTF-8 编码\n" +
-                                "- 自动备份原文件\n" +
-                                "- 自动添加修改注释\n" +
-                                "- 验证原内容匹配后再修改\n" +
-                                "⚠️ 警告：此操作会修改代码，请谨慎使用！")
-                .inputSchema(Map.of(
-                        "type", "object",
-                        "properties", Map.of(
-                                "path", Map.of(
-                                        "type", "string",
-                                        "description", "文件相对路径"),
-                                "oldContent", Map.of(
-                                        "type", "string",
-                                        "description", "要替换的原始代码片段"),
-                                "newContent", Map.of(
-                                        "type", "string",
-                                        "description", "新的代码片段"),
-                                "reason", Map.of(
-                                        "type", "string",
-                                        "description", "修改原因，用于自动注释")),
-                        "required", java.util.Arrays.asList("path", "oldContent", "newContent")))
-                .build();
+    public String getName() {
+        return "edit_code";
+    }
+
+    @Override
+    public String getDescription() {
+        return "编辑代码文件（带安全保护）。\n通过字符串替换方式修改代码文件。\n安全措施：\n- 自动 UTF-8 编码\n- 自动备份原文件\n- 自动添加修改注释\n- 验证原内容匹配后再修改\n⚠️ 警告：此操作会修改代码，请谨慎使用！";
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getInputSchema() {
+        return (Map<String, Object>) (Map) Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "path", Map.of(
+                                "type", "string",
+                                "description", "文件相对路径"),
+                        "oldContent", Map.of(
+                                "type", "string",
+                                "description", "要替换的原始代码片段"),
+                        "newContent", Map.of(
+                                "type", "string",
+                                "description", "新的代码片段"),
+                        "reason", Map.of(
+                                "type", "string",
+                                "description", "修改原因，用于自动注释")),
+                "required", List.of("path", "oldContent", "newContent"));
     }
 
     /**
@@ -104,14 +105,14 @@ public class EditCodeTool implements ToolHandler {
      * @return 工具执行结果
      */
     @Override
-    public ToolResult execute(Map<String, Object> arguments) {
+    public String execute(Map<String, Object> arguments) {
         String path = (String) arguments.get("path");
         String oldContent = (String) arguments.get("oldContent");
         String newContent = (String) arguments.get("newContent");
         String reason = (String) arguments.getOrDefault("reason", "AI自动修复");
 
         if (path == null || oldContent == null || newContent == null) {
-            return ToolResult.error("path, oldContent, newContent are required");
+            throw new RuntimeException("path, oldContent, newContent are required");
         }
 
         try {
@@ -122,14 +123,14 @@ public class EditCodeTool implements ToolHandler {
             var result = codeEditService.editFile(path, oldContent, newContent);
 
             if (result.success()) {
-                return ToolResult.text("✅ " + result.message() + "\n\n修改详情:\n" +
+                return "✅ " + result.message() + "\n\n修改详情:\n" +
                         "文件: " + path + "\n" +
-                        "修改ID: " + result.editId());
+                        "修改ID: " + result.editId();
             } else {
-                return ToolResult.error("❌ " + result.message());
+                throw new RuntimeException("❌ " + result.message());
             }
         } catch (Exception e) {
-            return ToolResult.error("编辑失败: " + e.getMessage());
+            throw new RuntimeException("编辑失败: " + e.getMessage());
         }
     }
 }

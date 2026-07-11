@@ -1,8 +1,8 @@
 package io.yunxi.mcp.milvus.tool;
 
+import org.springframework.stereotype.Component;
+
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import io.yunxi.mcp.milvus.config.MilvusClientHolder;
 import lombok.extern.slf4j.Slf4j;
 
@@ -15,6 +15,7 @@ import java.util.*;
  * </p>
  */
 @Slf4j
+@Component
 public class GetNutrientStandardTool implements ToolHandler {
 
     private final MilvusClientHolder clientHolder;
@@ -65,34 +66,38 @@ public class GetNutrientStandardTool implements ToolHandler {
     }
 
     @Override
-    public ToolDefinition getDefinition() {
-        return ToolDefinition.builder()
-                .name("get_nutrient_standard")
-                .description(
-                        "【重要】获取营养素推荐标准，用于食谱评分和营养分析。" +
-                                "参数：crowdType(人群类型，如'小学生'、'初中生'、'高中生'、'教师')。" +
-                                "返回每日营养素推荐量：热量(kcal)、蛋白质(g)、脂肪(g)、碳水化合物(g)的最小和最大值。")
-                .inputSchema(Map.of(
-                        "type", "object",
-                        "properties", Map.of(
-                                "crowdType", Map.of(
-                                        "type", "string",
-                                        "description", "人群类型：小学生、初中生、高中生、教师"),
-                                "mealCount", Map.of(
-                                        "type", "integer",
-                                        "description", "餐次数量（1=每日, 2=每日两餐, 3=每日三餐），用于计算每餐推荐量",
-                                        "default", 3)),
-                        "required", List.of("crowdType")))
-                .build();
+    public String getName() {
+        return "get_nutrient_standard";
     }
 
     @Override
-    public ToolResult execute(Map<String, Object> arguments) {
+    public String getDescription() {
+        return "【重要】获取营养素推荐标准，用于食谱评分和营养分析。参数：crowdType(人群类型，如'小学生'、'初中生'、'高中生'、'教师')。返回每日营养素推荐量：热量(kcal)、蛋白质(g)、脂肪(g)、碳水化合物(g)的最小和最大值。";
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getInputSchema() {
+        return (Map<String, Object>) (Map) Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "crowdType", Map.of(
+                                "type", "string",
+                                "description", "人群类型：小学生、初中生、高中生、教师"),
+                        "mealCount", Map.of(
+                                "type", "integer",
+                                "description", "餐次数量（1=每日, 2=每日两餐, 3=每日三餐），用于计算每餐推荐量",
+                                "default", 3)),
+                "required", List.of("crowdType"));
+    }
+
+    @Override
+    public String execute(Map<String, Object> arguments) {
         String crowdType = (String) arguments.get("crowdType");
         Integer mealCount = getIntArgument(arguments, "mealCount", 3);
 
         if (crowdType == null || crowdType.isBlank()) {
-            return ToolResult.error("crowdType is required");
+            throw new RuntimeException("crowdType is required");
         }
 
         log.info("【营养标准】crowdType={}, mealCount={}", crowdType, mealCount);
@@ -103,7 +108,7 @@ public class GetNutrientStandardTool implements ToolHandler {
             Map<String, Object> standard = DEFAULT_STANDARDS.get(matchedType);
 
             if (standard == null) {
-                return ToolResult.error("未找到人群类型: " + crowdType + "，可选: " + DEFAULT_STANDARDS.keySet());
+                throw new RuntimeException("未找到人群类型: " + crowdType + "，可选: " + DEFAULT_STANDARDS.keySet());
             }
 
             // 计算每餐推荐量
@@ -129,11 +134,11 @@ public class GetNutrientStandardTool implements ToolHandler {
             ));
 
             log.info("【营养标准】返回标准: {}", matchedType);
-            return ToolResult.text(formatResult(result));
+            return formatResult(result);
 
         } catch (Exception e) {
             log.error("【营养标准】获取失败: crowdType={}", crowdType, e);
-            return ToolResult.error("获取失败: " + e.getMessage());
+            throw new RuntimeException("获取失败: " + e.getMessage());
         }
     }
 

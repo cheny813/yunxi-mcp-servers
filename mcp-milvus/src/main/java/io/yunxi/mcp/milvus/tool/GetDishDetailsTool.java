@@ -1,12 +1,12 @@
 package io.yunxi.mcp.milvus.tool;
 
+import org.springframework.stereotype.Component;
+
 import io.milvus.v2.client.MilvusClientV2;
 import io.milvus.v2.service.vector.request.SearchReq;
 import io.milvus.v2.service.vector.request.data.FloatVec;
 import io.milvus.v2.service.vector.response.SearchResp;
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import io.yunxi.mcp.milvus.config.MilvusClientHolder;
 import io.yunxi.mcp.milvus.embedding.EmbeddingService;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +21,7 @@ import java.util.*;
  * </p>
  */
 @Slf4j
+@Component
 public class GetDishDetailsTool implements ToolHandler {
 
     private final MilvusClientHolder clientHolder;
@@ -35,43 +36,47 @@ public class GetDishDetailsTool implements ToolHandler {
     }
 
     @Override
-    public ToolDefinition getDefinition() {
-        return ToolDefinition.builder()
-                .name("get_dish_details")
-                .description(
-                        "【已修复】根据菜品ID获取菜品详细信息。" +
-                                "支持精确查询，返回包含 nutrients、ingredientIds 等完整信息。" +
-                                "参数：schoolId(学校ID), dishId(菜品ID)。")
-                .inputSchema(Map.of(
-                        "type", "object",
-                        "properties", Map.of(
-                                "schoolId", Map.of(
-                                        "type", "integer",
-                                        "description", "学校ID"),
-                                "dishId", Map.of(
-                                        "type", "integer",
-                                        "description", "菜品ID")),
-                        "required", Arrays.asList("schoolId", "dishId")))
-                .build();
+    public String getName() {
+        return "get_dish_details";
     }
 
     @Override
-    public ToolResult execute(Map<String, Object> arguments) {
+    public String getDescription() {
+        return "【已修复】根据菜品ID获取菜品详细信息。支持精确查询，返回包含 nutrients、ingredientIds 等完整信息。参数：schoolId(学校ID), dishId(菜品ID)。";
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getInputSchema() {
+        return (Map<String, Object>) (Map) Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "schoolId", Map.of(
+                                "type", "integer",
+                                "description", "学校ID"),
+                        "dishId", Map.of(
+                                "type", "integer",
+                                "description", "菜品ID")),
+                "required", List.of("schoolId", "dishId"));
+    }
+
+    @Override
+    public String execute(Map<String, Object> arguments) {
         Long schoolId = getLongArgument(arguments, "schoolId");
         Long dishId = getLongArgument(arguments, "dishId");
 
         if (schoolId == null) {
-            return ToolResult.error("schoolId is required");
+            throw new RuntimeException("schoolId is required");
         }
         if (dishId == null) {
-            return ToolResult.error("dishId is required");
+            throw new RuntimeException("dishId is required");
         }
 
         log.info("【获取菜品详情】schoolId={}, dishId={}", schoolId, dishId);
 
         MilvusClientV2 milvusClient = clientHolder.getClient();
         if (milvusClient == null) {
-            return ToolResult.error("Milvus 服务暂不可用，正在尝试重连");
+            throw new RuntimeException("Milvus 服务暂不可用，正在尝试重连");
         }
 
         try {
@@ -85,15 +90,15 @@ public class GetDishDetailsTool implements ToolHandler {
             }
 
             if (dish == null) {
-                return ToolResult.error("未找到菜品ID为 " + dishId + " 的数据，请检查菜品是否存在");
+                throw new RuntimeException("未找到菜品ID为 " + dishId + " 的数据，请检查菜品是否存在");
             }
 
             // 3. 构建结果
-            return ToolResult.text(formatDishDetails(dish));
+            return formatDishDetails(dish);
 
         } catch (Exception e) {
             log.error("获取菜品详情失败: schoolId={}, dishId={}", schoolId, dishId, e);
-            return ToolResult.error("获取菜品详情失败: " + e.getMessage());
+            throw new RuntimeException("获取菜品详情失败: " + e.getMessage());
         }
     }
 

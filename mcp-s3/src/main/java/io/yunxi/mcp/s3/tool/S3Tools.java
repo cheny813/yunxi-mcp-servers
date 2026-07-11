@@ -1,8 +1,6 @@
 package io.yunxi.mcp.s3.tool;
 
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
@@ -79,13 +77,33 @@ public class S3Tools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("list_buckets")
-                    .description("List all S3 buckets")
-                    .inputSchema(emptySchema())
-                    .build();
+
+        public String getName() {
+
+            return "list_buckets";
+
         }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "List all S3 buckets";
+
+        }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) emptySchema();
+
+        }
+
 
         /**
          * 执行列出存储桶操作
@@ -94,7 +112,7 @@ public class S3Tools {
          * @return 工具执行结果，包含存储桶列表
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             try {
                 // 调用 S3 API 列出所有存储桶
                 ListBucketsResponse response = s3Client.listBuckets();
@@ -108,9 +126,9 @@ public class S3Tools {
                     }
                     sb.append("\n");
                 }
-                return ToolResult.text(sb.toString());
+                return (sb.toString());
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }
@@ -145,14 +163,34 @@ public class S3Tools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("list_objects")
-                    .description("List objects in an S3 bucket")
-                    .inputSchema(schema("bucket", "string", "Bucket name",
-                            "prefix", "string", "Prefix to filter objects"))
-                    .build();
+
+        public String getName() {
+
+            return "list_objects";
+
         }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "List objects in an S3 bucket";
+
+        }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) schema("bucket", "string", "Bucket name",
+                            "prefix", "string", "Prefix to filter objects");
+
+        }
+
 
         /**
          * 执行列出对象操作
@@ -165,7 +203,7 @@ public class S3Tools {
          * @return 工具执行结果，包含对象列表
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             // 获取必填参数：存储桶名称
             String bucket = (String) args.get("bucket");
             // 获取可选参数：前缀过滤
@@ -189,9 +227,9 @@ public class S3Tools {
                     sb.append("- ").append(obj.key())
                       .append(" (").append(obj.size()).append(" bytes)\n");
                 }
-                return ToolResult.text(sb.toString());
+                return (sb.toString());
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }
@@ -226,15 +264,35 @@ public class S3Tools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("put_object")
-                    .description("Upload an object to S3")
-                    .inputSchema(schema("bucket", "string", "Bucket name",
-                            "key", "string", "Object key",
-                            "content", "string", "Content to upload"))
-                    .build();
+
+        public String getName() {
+
+            return "put_object";
+
         }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "Upload an object to S3";
+
+        }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) schema("bucket", "string", "Bucket name",
+                            "key", "string", "Object key",
+                            "content", "string", "Content to upload");
+
+        }
+
 
         /**
          * 执行上传对象操作
@@ -248,7 +306,7 @@ public class S3Tools {
          * @return 工具执行结果，包含上传状态和 ETag
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             String bucket = (String) args.get("bucket");
             String key = (String) args.get("key");
             String content = (String) args.get("content");
@@ -262,9 +320,9 @@ public class S3Tools {
                                 .build(),
                         RequestBody.fromString(content)
                 );
-                return ToolResult.text("Uploaded: s3://" + bucket + "/" + key + "\nETag: " + response.eTag());
+                return ("Uploaded: s3://" + bucket + "/" + key + "\nETag: " + response.eTag());
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }
@@ -299,14 +357,34 @@ public class S3Tools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("get_object")
-                    .description("Get object content from S3")
-                    .inputSchema(schema("bucket", "string", "Bucket name",
-                            "key", "string", "Object key"))
-                    .build();
+
+        public String getName() {
+
+            return "get_object";
+
         }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "Get object content from S3";
+
+        }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) schema("bucket", "string", "Bucket name",
+                            "key", "string", "Object key");
+
+        }
+
 
         /**
          * 执行下载对象操作
@@ -319,7 +397,7 @@ public class S3Tools {
          * @return 工具执行结果，包含对象内容
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             String bucket = (String) args.get("bucket");
             String key = (String) args.get("key");
 
@@ -331,9 +409,9 @@ public class S3Tools {
                 // 读取并返回对象内容
                 String content = new BufferedReader(new InputStreamReader(response))
                         .lines().collect(Collectors.joining("\n"));
-                return ToolResult.text("s3://" + bucket + "/" + key + "\n\n" + content);
+                return ("s3://" + bucket + "/" + key + "\n\n" + content);
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }
@@ -368,14 +446,34 @@ public class S3Tools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("delete_object")
-                    .description("Delete an object from S3")
-                    .inputSchema(schema("bucket", "string", "Bucket name",
-                            "key", "string", "Object key"))
-                    .build();
+
+        public String getName() {
+
+            return "delete_object";
+
         }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "Delete an object from S3";
+
+        }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) schema("bucket", "string", "Bucket name",
+                            "key", "string", "Object key");
+
+        }
+
 
         /**
          * 执行删除对象操作
@@ -388,7 +486,7 @@ public class S3Tools {
          * @return 工具执行结果，包含删除状态
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             String bucket = (String) args.get("bucket");
             String key = (String) args.get("key");
 
@@ -400,9 +498,9 @@ public class S3Tools {
                                 .key(key)
                                 .build()
                 );
-                return ToolResult.text("Deleted: s3://" + bucket + "/" + key);
+                return ("Deleted: s3://" + bucket + "/" + key);
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }

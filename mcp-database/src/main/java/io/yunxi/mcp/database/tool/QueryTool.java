@@ -1,8 +1,6 @@
 package io.yunxi.mcp.database.tool;
 
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import io.yunxi.mcp.database.config.DatabaseConfig;
 import io.yunxi.mcp.database.config.DatabaseConfigService;
 import io.yunxi.mcp.database.security.SqlSandbox;
@@ -10,35 +8,24 @@ import io.yunxi.mcp.database.security.SqlSandbox;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.stereotype.Component;
+
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
 
 /**
  * SQL 查询工具 - 支持多数据库
- * <p>
- * 工具名称: {@code query_db}
- * </p>
- * <p>
- * 执行 SQL 查询并返回结果，支持多数据库切换。
- * 仅允许 SELECT/SHOW/DESCRIBE/EXPLAIN 查询，确保数据安全。
- * </p>
  *
  * @author yunxi
- * @version 1.0.0
+ * @version 2.0.0
  * @since 1.0.0
  */
+@Component
 public class QueryTool implements ToolHandler {
 
-    /**
-     * 数据库配置服务
-     * <p>
-     * 提供多数据库配置管理和数据源获取功能。
-     * </p>
-     */
     private final DatabaseConfigService configService;
 
-    /** JSON 映射器（支持 Java 8 日期时间类型） */
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule())
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -48,74 +35,73 @@ public class QueryTool implements ToolHandler {
     }
 
     @Override
-    public ToolDefinition getDefinition() {
-        return ToolDefinition.builder()
-                .name("query_db")
-                .description(
-                        "Execute a SQL query on a specific database and return results. " +
-                                "执行SQL查询并返回结果。 " +
-                                "Use this when you need to read data from database, perform analytics queries, or generate reports. "
-                                +
-                                "适用于从数据库读取数据、执行分析查询或生成报告等场景。 " +
-                                "注意：仅允许 SELECT/SHOW/DESCRIBE/EXPLAIN 查询。")
-                .inputSchema(Map.of(
-                        "type", "object",
-                        "properties", Map.of(
-                                "db_id", Map.of(
-                                        "type", "string",
-                                        "description",
-                                        "Database ID to query. Use 'default' for the primary database. " +
-                                                "要查询的数据库ID，使用'default'查询主数据库。"),
-                                "sql", Map.of(
-                                        "type", "string",
-                                        "description", "SQL query to execute (SELECT/SHOW/DESCRIBE/EXPLAIN only). " +
-                                                "要执行的SQL查询"),
-                                "limit", Map.of(
-                                        "type", "integer",
-                                        "description", "Max rows to return (default: 100)",
-                                        "default", 100),
-                                "format", Map.of(
-                                        "type", "string",
-                                        "description",
-                                        "Output format: 'text' for human-readable table, 'json' for JSON array (default: text)",
-                                        "default", "text")),
-                        "required", List.of("sql")))
-                .build();
+    public String getName() {
+        return "query_db";
     }
 
     @Override
-    public ToolResult execute(Map<String, Object> arguments) {
+    public String getDescription() {
+        return "Execute a SQL query on a specific database and return results. " +
+                "执行SQL查询并返回结果。 " +
+                "Use this when you need to read data from database, perform analytics queries, or generate reports. " +
+                "适用于从数据库读取数据、执行分析查询或生成报告等场景。 " +
+                "注意：仅允许 SELECT/SHOW/DESCRIBE/EXPLAIN 查询。";
+    }
+
+    @Override
+    public Map<String, Object> getInputSchema() {
+        return Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "db_id", Map.of(
+                                "type", "string",
+                                "description", "Database ID to query. Use 'default' for the primary database. " +
+                                        "要查询的数据库ID，使用'default'查询主数据库。"),
+                        "sql", Map.of(
+                                "type", "string",
+                                "description", "SQL query to execute (SELECT/SHOW/DESCRIBE/EXPLAIN only). " +
+                                        "要执行的SQL查询"),
+                        "limit", Map.of(
+                                "type", "integer",
+                                "description", "Max rows to return (default: 100)",
+                                "default", 100),
+                        "format", Map.of(
+                                "type", "string",
+                                "description", "Output format: 'text' for human-readable table, 'json' for JSON array (default: text)",
+                                "default", "text")),
+                "required", List.of("sql"));
+    }
+
+    @Override
+    public String execute(Map<String, Object> arguments) {
         String dbId = (String) arguments.getOrDefault("db_id", "default");
         String sql = (String) arguments.get("sql");
         int limit = arguments.containsKey("limit") ? ((Number) arguments.get("limit")).intValue() : 100;
         String format = (String) arguments.getOrDefault("format", "text");
 
         if (sql == null || sql.isBlank()) {
-            return ToolResult.error("SQL query is required");
+            throw new RuntimeException("SQL query is required");
         }
 
-        // 获取数据库配置进行沙箱校验
         DatabaseConfig dbConfig = configService.getConfig(dbId);
         if (dbConfig == null) {
-            return ToolResult.error("Database config not found: " + dbId);
+            throw new RuntimeException("Database config not found: " + dbId);
         }
 
-        // 沙箱安全校验
         SqlSandbox.ValidationResult sandboxResult = SqlSandbox.validate(sql, dbConfig);
         if (!sandboxResult.isValid()) {
-            return ToolResult.error("Security check failed: " + sandboxResult.getMessage());
+            throw new RuntimeException("Security check failed: " + sandboxResult.getMessage());
         }
 
         try {
             DataSource dataSource = configService.getDataSource(dbId);
             if (dataSource == null) {
-                return ToolResult.error("Database not found: " + dbId);
+                throw new RuntimeException("Database not found: " + dbId);
             }
 
             try (Connection conn = dataSource.getConnection();
                     Statement stmt = conn.createStatement()) {
 
-                // 应用行数限制（取配置和用户指定的最小值）
                 int maxRows = Math.min(limit, dbConfig.getMaxRowsLimit());
                 stmt.setMaxRows(maxRows);
                 stmt.setQueryTimeout(dbConfig.getQueryTimeoutSeconds());
@@ -143,15 +129,15 @@ public class QueryTool implements ToolHandler {
 
                 if ("json".equals(format)) {
                     try {
-                        return ToolResult.text(objectMapper.writeValueAsString(rows));
+                        return objectMapper.writeValueAsString(rows);
                     } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
-                        return ToolResult.error("JSON 序列化失败: " + e.getMessage());
+                        throw new RuntimeException("JSON 序列化失败: " + e.getMessage());
                     }
                 }
-                return ToolResult.text(formatResult(result));
+                return formatResult(result);
             }
         } catch (SQLException e) {
-            return ToolResult.error("SQL Error: " + e.getMessage());
+            throw new RuntimeException("SQL Error: " + e.getMessage());
         }
     }
 

@@ -1,8 +1,6 @@
 package io.yunxi.mcp.mongodb.tool;
 
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -78,20 +76,39 @@ public class MongoTools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("list_databases")
-                    .description(
-                            "List all MongoDB databases. " +
+
+        public String getName() {
+
+            return "list_databases";
+
+        }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "List all MongoDB databases. " +
                                     "列出所有MongoDB数据库。 " +
                                     "Use this when you need to explore available databases, discover data, or manage storage. "
                                     +
                                     "适用于探索可用数据库、发现数据或管理存储等场景。 " +
                                     "Common use cases: database discovery, storage management, data exploration. " +
-                                    "典型用例：数据库发现、存储管理、数据探索。")
-                    .inputSchema(emptySchema())
-                    .build();
+                                    "典型用例：数据库发现、存储管理、数据探索。";
+
         }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) emptySchema();
+
+        }
+
 
         /**
          * 执行列出数据库操作
@@ -100,7 +117,7 @@ public class MongoTools {
          * @return 工具执行结果，包含数据库列表
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             try {
                 StringBuilder sb = new StringBuilder();
                 int count = 0;
@@ -109,9 +126,9 @@ public class MongoTools {
                     sb.append("- ").append(dbName).append("\n");
                     count++;
                 }
-                return ToolResult.text("Databases (" + count + "):\n\n" + sb);
+                return ("Databases (" + count + "):\n\n" + sb);
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }
@@ -146,21 +163,40 @@ public class MongoTools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("list_collections")
-                    .description(
-                            "List collections in a MongoDB database. " +
+
+        public String getName() {
+
+            return "list_collections";
+
+        }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "List collections in a MongoDB database. " +
                                     "列出MongoDB数据库中的集合。 " +
                                     "Use this when you need to explore database structure, find collections, or plan queries. "
                                     +
                                     "适用于探索数据库结构、查找集合或规划查询等场景。 " +
                                     "Common use cases: schema exploration, collection discovery, query planning. " +
-                                    "典型用例：模式探索、集合发现、查询规划。")
-                    .inputSchema(schema("database", "string",
-                            "Database name. Example: 'mydb', 'test' | 数据库名称。示例: 'mydb', 'test'"))
-                    .build();
+                                    "典型用例：模式探索、集合发现、查询规划。";
+
         }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) schema("database", "string",
+                            "Database name. Example: 'mydb', 'test' | 数据库名称。示例: 'mydb', 'test'");
+
+        }
+
 
         /**
          * 执行列出集合操作
@@ -172,7 +208,7 @@ public class MongoTools {
          * @return 工具执行结果，包含集合列表
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             String database = (String) args.get("database");
             try {
                 // 获取指定数据库
@@ -184,9 +220,9 @@ public class MongoTools {
                     sb.append("- ").append(collName).append("\n");
                     count++;
                 }
-                return ToolResult.text("Collections in " + database + " (" + count + "):\n\n" + sb);
+                return ("Collections in " + database + " (" + count + "):\n\n" + sb);
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }
@@ -221,25 +257,44 @@ public class MongoTools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("find")
-                    .description(
-                            "Find documents in a MongoDB collection. " +
+
+        public String getName() {
+
+            return "find";
+
+        }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "Find documents in a MongoDB collection. " +
                                     "在MongoDB集合中查询文档。 " +
                                     "Use this when you need to retrieve data, search documents, or analyze stored information. "
                                     +
                                     "适用于检索数据、搜索文档或分析存储信息等场景。 " +
                                     "Common use cases: data retrieval, document search, data analysis. " +
-                                    "典型用例：数据检索、文档搜索、数据分析。")
-                    .inputSchema(schema(
+                                    "典型用例：数据检索、文档搜索、数据分析。";
+
+        }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) schema(
                             "database", "string", "Database name. Example: 'mydb' | 数据库名称。示例: 'mydb'",
                             "collection", "string", "Collection name. Example: 'users' | 集合名称。示例: 'users'",
                             "filter", "string",
                             "JSON filter (optional). Example: '{\"status\":\"active\"}' | JSON过滤器（可选）。示例: '{\"status\":\"active\"}'",
-                            "limit", "integer", "Maximum documents to return. Example: 10 | 最大返回文档数。示例: 10"))
-                    .build();
+                            "limit", "integer", "Maximum documents to return. Example: 10 | 最大返回文档数。示例: 10");
+
         }
+
 
         /**
          * 执行查询文档操作
@@ -254,7 +309,7 @@ public class MongoTools {
          * @return 工具执行结果，包含查询到的文档列表
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             String database = (String) args.get("database");
             String collection = (String) args.get("collection");
             // 获取返回数量限制
@@ -272,9 +327,9 @@ public class MongoTools {
                     sb.append(doc.toJson()).append("\n\n");
                     count++;
                 }
-                return ToolResult.text("Found " + count + " document(s):\n\n" + sb);
+                return ("Found " + count + " document(s):\n\n" + sb);
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }
@@ -309,23 +364,42 @@ public class MongoTools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("insert")
-                    .description(
-                            "Insert a document into a MongoDB collection. " +
+
+        public String getName() {
+
+            return "insert";
+
+        }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "Insert a document into a MongoDB collection. " +
                                     "向MongoDB集合插入文档。 " +
                                     "Use this when you need to store data, add records, or save new documents. " +
                                     "适用于存储数据、添加记录或保存新文档等场景。 " +
                                     "Common use cases: data storage, record creation, document insertion. " +
-                                    "典型用例：数据存储、记录创建、文档插入。")
-                    .inputSchema(schema(
+                                    "典型用例：数据存储、记录创建、文档插入。";
+
+        }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) schema(
                             "database", "string", "Database name. Example: 'mydb' | 数据库名称。示例: 'mydb'",
                             "collection", "string", "Collection name. Example: 'users' | 集合名称。示例: 'users'",
                             "document", "string",
-                            "JSON document to insert. Example: '{\"name\":\"John\"}' | 要插入的JSON文档。示例: '{\"name\":\"John\"}'"))
-                    .build();
+                            "JSON document to insert. Example: '{\"name\":\"John\"}' | 要插入的JSON文档。示例: '{\"name\":\"John\"}'");
+
         }
+
 
         /**
          * 执行插入文档操作
@@ -339,7 +413,7 @@ public class MongoTools {
          * @return 工具执行结果，包含插入文档的 ID
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             String database = (String) args.get("database");
             String collection = (String) args.get("collection");
             String document = (String) args.get("document");
@@ -351,9 +425,9 @@ public class MongoTools {
                 // 解析并插入文档
                 Document doc = Document.parse(document);
                 coll.insertOne(doc);
-                return ToolResult.text("Inserted document with ID: " + doc.getObjectId("_id"));
+                return ("Inserted document with ID: " + doc.getObjectId("_id"));
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }
@@ -388,23 +462,42 @@ public class MongoTools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("delete")
-                    .description(
-                            "Delete documents from a MongoDB collection. " +
+
+        public String getName() {
+
+            return "delete";
+
+        }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "Delete documents from a MongoDB collection. " +
                                     "从MongoDB集合删除文档。 " +
                                     "Use this when you need to remove records, clean up data, or manage storage. " +
                                     "适用于删除记录、清理数据或管理存储等场景。 " +
                                     "Common use cases: data cleanup, record removal, storage management. " +
-                                    "典型用例：数据清理、记录删除、存储管理。")
-                    .inputSchema(schema(
+                                    "典型用例：数据清理、记录删除、存储管理。";
+
+        }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) schema(
                             "database", "string", "Database name. Example: 'mydb' | 数据库名称。示例: 'mydb'",
                             "collection", "string", "Collection name. Example: 'users' | 集合名称。示例: 'users'",
                             "filter", "string",
-                            "JSON filter. Example: '{\"status\":\"inactive\"}' | JSON过滤器。示例: '{\"status\":\"inactive\"}'"))
-                    .build();
+                            "JSON filter. Example: '{\"status\":\"inactive\"}' | JSON过滤器。示例: '{\"status\":\"inactive\"}'");
+
         }
+
 
         /**
          * 执行删除文档操作
@@ -418,7 +511,7 @@ public class MongoTools {
          * @return 工具执行结果，包含删除的文档数量
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             String database = (String) args.get("database");
             String collection = (String) args.get("collection");
             String filter = (String) args.getOrDefault("filter", "{}");
@@ -429,9 +522,9 @@ public class MongoTools {
                 MongoCollection<Document> coll = db.getCollection(collection);
                 // 执行删除操作
                 var result = coll.deleteMany(Document.parse(filter));
-                return ToolResult.text("Deleted " + result.getDeletedCount() + " document(s)");
+                return ("Deleted " + result.getDeletedCount() + " document(s)");
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }

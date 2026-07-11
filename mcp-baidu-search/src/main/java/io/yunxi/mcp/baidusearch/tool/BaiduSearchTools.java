@@ -4,8 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.yunxi.mcp.baidusearch.BaiduSearchConfig;
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -65,28 +63,59 @@ public class BaiduSearchTools {
         }
 
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("baidu_search")
-                    .description(
-                            "Search the web using Baidu AI Search Engine. " +
+
+
+        public String getName() {
+
+
+            return "baidu_search";
+
+
+        }
+
+
+
+        @Override
+
+
+        public String getDescription() {
+
+
+            return "Search the web using Baidu AI Search Engine. " +
                                     "使用百度 AI 搜索引擎进行网页搜索。 " +
                                     "Use this when you need live information, recent news, or real-time data. " +
                                     "适用于需要实时信息、新闻或最新数据等场景。 " +
                                     "Common use cases: news, current events, latest information. " +
-                                    "典型用例：新闻、时事、最新信息。")
-                    .inputSchema(schema(
-                            "query", "string", "Search query. Example: '人工智能最新发展' | 搜索关键词。示例: '人工智能最新发展'",
-                            "count", "integer", "Number of results (1-50, default: 10) | 返回结果数（1-50，默认: 10）",
-                            "freshness", "string", "Time range: pd (past day), pw (past week), pm (past month), py (past year) | 时间范围: pd(过去24小时), pw(过去7天), pm(过去30天), py(过去365天)"))
-                    .build();
+                                    "典型用例：新闻、时事、最新信息。";
+
+
         }
 
+
+
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+
+
+        @SuppressWarnings("unchecked")
+
+
+        public Map<String, Object> getInputSchema() {
+
+
+            return (Map<String, Object>) (Map) schema(
+                            "query", "string", "Search query. Example: '人工智能最新发展' | 搜索关键词。示例: '人工智能最新发展'",
+                            "count", "integer", "Number of results (1-50, default: 10) | 返回结果数（1-50，默认: 10）",
+                            "freshness", "string", "Time range: pd (past day), pw (past week), pm (past month), py (past year) | 时间范围: pd(过去24小时), pw(过去7天), pm(过去30天), py(过去365天)");
+
+
+        }
+
+
+        @Override
+        public String execute(Map<String, Object> args) {
             String query = (String) args.get("query");
             if (query == null || query.isBlank()) {
-                return ToolResult.error("Error: query is required");
+                throw new RuntimeException("Error: query is required");
             }
 
             Integer count = args.containsKey("count") ? ((Number) args.get("count")).intValue() : null;
@@ -99,7 +128,7 @@ public class BaiduSearchTools {
     /**
      * 执行百度搜索
      */
-    public ToolResult search(String query, Integer count, String freshness) {
+    public String search(String query, Integer count, String freshness) {
         try {
             // 获取 API Key
             String apiKey = config.getApiKey();
@@ -107,7 +136,7 @@ public class BaiduSearchTools {
                 // 尝试从环境变量获取
                 apiKey = System.getenv("BAIDU_API_KEY");
                 if (apiKey == null || apiKey.isBlank()) {
-                    return ToolResult.error("Error: BAIDU_API_KEY not configured");
+                    throw new RuntimeException("Error: BAIDU_API_KEY not configured");
                 }
             }
 
@@ -150,7 +179,7 @@ public class BaiduSearchTools {
 
             if (response.statusCode() != 200) {
                 log.error("Baidu API error: status={}, body={}", response.statusCode(), response.body());
-                return ToolResult.error("Error: API request failed with status " + response.statusCode());
+                throw new RuntimeException("Error: API request failed with status " + response.statusCode());
             }
 
             // 解析响应
@@ -158,13 +187,13 @@ public class BaiduSearchTools {
 
             if (root.has("code")) {
                 String errorMsg = root.has("message") ? root.get("message").asText() : "Unknown error";
-                return ToolResult.error("Error: " + errorMsg);
+                throw new RuntimeException("Error: " + errorMsg);
             }
 
             // 提取结果
             JsonNode references = root.get("references");
             if (references == null || references.isEmpty()) {
-                return ToolResult.text("No search results found for: " + query);
+                return ("No search results found for: " + query);
             }
 
             // 格式化输出
@@ -192,11 +221,11 @@ public class BaiduSearchTools {
                 index++;
             }
 
-            return ToolResult.text(sb.toString());
+            return (sb.toString());
 
         } catch (Exception e) {
             log.error("Baidu search error: {}", e.getMessage(), e);
-            return ToolResult.error("Error: " + e.getMessage());
+            throw new RuntimeException("Error: " + e.getMessage());
         }
     }
 

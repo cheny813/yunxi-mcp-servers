@@ -1,8 +1,8 @@
 package io.yunxi.mcp.logging.tool;
 
+import org.springframework.stereotype.Component;
+
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import io.yunxi.mcp.logging.service.LogQueryService;
 
 import java.util.List;
@@ -40,6 +40,7 @@ import java.util.Map;
  * @see LogQueryService
  * @since 1.0.0
  */
+@Component
 public class ListLogFilesTool implements ToolHandler {
 
     /**
@@ -65,17 +66,21 @@ public class ListLogFilesTool implements ToolHandler {
      * @return 工具定义对象
      */
     @Override
-    public ToolDefinition getDefinition() {
-        return ToolDefinition.builder()
-                .name("list_log_files")
-                .description(
-                        "列出可用的日志文件。\n" +
-                                "返回日志目录中的所有日志文件列表及其大小。\n" +
-                                "用于确定要查询的日志文件。")
-                .inputSchema(Map.of(
-                        "type", "object",
-                        "properties", Map.of()))
-                .build();
+    public String getName() {
+        return "list_log_files";
+    }
+
+    @Override
+    public String getDescription() {
+        return "列出可用的日志文件。\n返回日志目录中的所有日志文件列表及其大小。\n用于确定要查询的日志文件。";
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getInputSchema() {
+        return (Map<String, Object>) (Map) Map.of(
+                "type", "object",
+                "properties", Map.of());
     }
 
     /**
@@ -88,12 +93,12 @@ public class ListLogFilesTool implements ToolHandler {
      * @return 工具执行结果，包含日志文件列表
      */
     @Override
-    public ToolResult execute(Map<String, Object> arguments) {
+    public String execute(Map<String, Object> arguments) {
         try {
             List<String> files = logQueryService.listLogFiles();
 
             if (files.isEmpty()) {
-                return ToolResult.text("未找到日志文件");
+                return "未找到日志文件";
             }
 
             StringBuilder sb = new StringBuilder();
@@ -102,9 +107,9 @@ public class ListLogFilesTool implements ToolHandler {
                 sb.append("- ").append(file).append("\n");
             }
 
-            return ToolResult.text(sb.toString());
+            return sb.toString();
         } catch (Exception e) {
-            return ToolResult.error("获取日志文件列表失败: " + e.getMessage());
+            throw new RuntimeException("获取日志文件列表失败: " + e.getMessage());
         }
     }
 }

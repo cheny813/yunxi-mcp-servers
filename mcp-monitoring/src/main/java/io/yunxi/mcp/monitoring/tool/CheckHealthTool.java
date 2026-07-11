@@ -1,8 +1,8 @@
 package io.yunxi.mcp.monitoring.tool;
 
+import org.springframework.stereotype.Component;
+
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import io.yunxi.mcp.monitoring.service.AlertService;
 
 import java.util.Map;
@@ -17,6 +17,7 @@ import java.util.Map;
  * @author yunxi-mcp-servers
  * @since 1.0.0
  */
+@Component
 public class CheckHealthTool implements ToolHandler {
 
     private final AlertService alertService;
@@ -26,36 +27,40 @@ public class CheckHealthTool implements ToolHandler {
     }
 
     @Override
-    public ToolDefinition getDefinition() {
-        return ToolDefinition.builder()
-                .name("check_health")
-                .description(
-                        "执行健康检查。\n" +
-                        "支持 HTTP 健康检查和 TCP 端口连通性检查。\n" +
-                        "用于验证服务可用性、诊断连接问题。")
-                .inputSchema(Map.of(
-                        "type", "object",
-                        "properties", Map.ofEntries(
-                                Map.entry("type", Map.of(
-                                        "type", "string",
-                                        "description", "检查类型: http 或 tcp，默认 http")),
-                                Map.entry("url", Map.of(
-                                        "type", "string",
-                                        "description", "HTTP 检查的目标 URL（type=http 时必填）")),
-                                Map.entry("host", Map.of(
-                                        "type", "string",
-                                        "description", "TCP 检查的目标主机（type=tcp 时必填）")),
-                                Map.entry("port", Map.of(
-                                        "type", "number",
-                                        "description", "TCP 检查的目标端口（type=tcp 时必填）")),
-                                Map.entry("timeoutMs", Map.of(
-                                        "type", "number",
-                                        "description", "超时时间（毫秒），默认 5000")))))
-                .build();
+    public String getName() {
+        return "check_health";
     }
 
     @Override
-    public ToolResult execute(Map<String, Object> arguments) {
+    public String getDescription() {
+        return "执行健康检查。\n支持 HTTP 健康检查和 TCP 端口连通性检查。\n用于验证服务可用性、诊断连接问题。";
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getInputSchema() {
+        return (Map<String, Object>) (Map) Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "type", Map.of(
+                                "type", "string",
+                                "description", "检查类型: http 或 tcp，默认 http"),
+                        "url", Map.of(
+                                "type", "string",
+                                "description", "HTTP 检查的目标 URL（type=http 时必填）"),
+                        "host", Map.of(
+                                "type", "string",
+                                "description", "TCP 检查的目标主机（type=tcp 时必填）"),
+                        "port", Map.of(
+                                "type", "number",
+                                "description", "TCP 检查的目标端口（type=tcp 时必填）"),
+                        "timeoutMs", Map.of(
+                                "type", "number",
+                                "description", "超时时间（毫秒），默认 5000")));
+    }
+
+    @Override
+    public String execute(Map<String, Object> arguments) {
         String type = (String) arguments.getOrDefault("type", "http");
         int timeoutMs = arguments.containsKey("timeoutMs")
                 ? ((Number) arguments.get("timeoutMs")).intValue()
@@ -67,14 +72,14 @@ public class CheckHealthTool implements ToolHandler {
             String host = (String) arguments.get("host");
             Object portObj = arguments.get("port");
             if (host == null || portObj == null) {
-                return ToolResult.error("TCP 检查需要提供 host 和 port 参数");
+                throw new RuntimeException("TCP 检查需要提供 host 和 port 参数");
             }
             int port = ((Number) portObj).intValue();
             result = alertService.checkTcp(host, port, timeoutMs);
         } else {
             String url = (String) arguments.get("url");
             if (url == null) {
-                return ToolResult.error("HTTP 检查需要提供 url 参数");
+                throw new RuntimeException("HTTP 检查需要提供 url 参数");
             }
             result = alertService.checkHttp(url, timeoutMs);
         }
@@ -91,6 +96,6 @@ public class CheckHealthTool implements ToolHandler {
         sb.append("- **消息**: ").append(result.getMessage()).append("\n");
         sb.append("- **时间**: ").append(result.getTimestamp()).append("\n");
 
-        return ToolResult.text(sb.toString());
+        return sb.toString();
     }
 }

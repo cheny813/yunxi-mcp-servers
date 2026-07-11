@@ -3,9 +3,6 @@ package io.yunxi.mcp.wikipedia.tool;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -59,22 +56,41 @@ public class WikipediaTools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("search")
-                    .description(
-                            "Search Wikipedia articles. " +
+
+        public String getName() {
+
+            return "search";
+
+        }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "Search Wikipedia articles. " +
                                     "搜索维基百科文章。 " +
                                     "Use this when you need to find information, research topics, or get general knowledge. "
                                     +
                                     "适用于查找信息、研究主题或获取通用知识等场景。 " +
                                     "Common use cases: research, fact-checking, general knowledge. " +
-                                    "典型用例：研究、事实核查、通用知识。")
-                    .inputSchema(schema(
-                            "query", "string", "Search query. Example: 'artificial intelligence' | 搜索关键词。示例: '人工智能'",
-                            "limit", "integer", "Maximum results (default: 5). Example: 10 | 最大结果数（默认: 5）。示例: 10"))
-                    .build();
+                                    "典型用例：研究、事实核查、通用知识。";
+
         }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) schema(
+                            "query", "string", "Search query. Example: 'artificial intelligence' | 搜索关键词。示例: '人工智能'",
+                            "limit", "integer", "Maximum results (default: 5). Example: 10 | 最大结果数（默认: 5）。示例: 10");
+
+        }
+
 
         /**
          * 执行搜索 Wikipedia 操作
@@ -90,7 +106,7 @@ public class WikipediaTools {
          * @return 工具执行结果，包含搜索到的文章列表
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             // 获取搜索参数
             String query = (String) args.get("query");
             // 获取返回数量限制
@@ -120,9 +136,9 @@ public class WikipediaTools {
                     sb.append("  URL: https://en.wikipedia.org/wiki/").append(URLEncoder.encode(title, "UTF-8"))
                             .append("\n\n");
                 }
-                return ToolResult.text(sb.toString());
+                return (sb.toString());
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }
@@ -144,21 +160,39 @@ public class WikipediaTools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("summary")
-                    .description(
-                            "Get Wikipedia article summary. " +
+
+        public String getName() {
+
+            return "summary";
+
+        }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "Get Wikipedia article summary. " +
                                     "获取维基百科文章摘要。 " +
                                     "Use this when you need a quick overview of a topic, extract key points, or get concise information. "
                                     +
                                     "适用于快速了解主题、提取要点或获取简洁信息等场景。 " +
                                     "Common use cases: quick reference, topic overview, information extraction. " +
-                                    "典型用例：快速参考、主题概览、信息提取。")
-                    .inputSchema(
-                            schema("title", "string", "Article title. Example: 'Machine learning' | 文章标题。示例: '机器学习'"))
-                    .build();
+                                    "典型用例：快速参考、主题概览、信息提取。";
+
         }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) schema("title", "string", "Article title. Example: 'Machine learning' | 文章标题。示例: '机器学习'");
+
+        }
+
 
         /**
          * 执行获取文章摘要操作
@@ -173,7 +207,7 @@ public class WikipediaTools {
          * @return 工具执行结果，包含文章摘要内容
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             String title = (String) args.get("title");
 
             try {
@@ -193,9 +227,9 @@ public class WikipediaTools {
                 StringBuilder sb = new StringBuilder();
                 sb.append("# ").append(page.get("title").asText()).append("\n\n");
                 sb.append(extract);
-                return ToolResult.text(sb.toString());
+                return (sb.toString());
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }

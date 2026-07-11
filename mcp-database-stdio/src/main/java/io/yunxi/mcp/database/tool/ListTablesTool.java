@@ -2,8 +2,6 @@ package io.yunxi.mcp.database.tool;
 
 import io.yunxi.mcp.database.DatabaseMcpServer;
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 
 import java.sql.*;
 import java.util.*;
@@ -20,24 +18,30 @@ public class ListTablesTool implements ToolHandler {
     }
 
     @Override
-    public ToolDefinition getDefinition() {
-        return ToolDefinition.builder()
-                .name("list_tables")
-                .description("List all tables in the database")
-                .inputSchema(Map.of(
-                        "type", "object",
-                        "properties", Map.of(
-                                "schema", Map.of(
-                                        "type", "string",
-                                        "description", "Database schema name (optional)"
-                                )
-                        )
-                ))
-                .build();
+    public String getName() {
+        return "list_tables";
     }
 
     @Override
-    public ToolResult execute(Map<String, Object> arguments) {
+    public String getDescription() {
+        return "List all tables in the database";
+    }
+
+    @Override
+    public Map<String, Object> getInputSchema() {
+        return Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "schema", Map.of(
+                                "type", "string",
+                                "description", "Database schema name (optional)"
+                        )
+                )
+        );
+    }
+
+    @Override
+    public String execute(Map<String, Object> arguments) {
         String schema = (String) arguments.get("schema");
 
         try (Connection conn = server.getConnection()) {
@@ -66,9 +70,9 @@ public class ListTablesTool implements ToolHandler {
                 sb.append("\n");
             }
 
-            return ToolResult.text(sb.toString());
+            return sb.toString();
         } catch (SQLException e) {
-            return ToolResult.error("Database Error: " + e.getMessage());
+            throw new RuntimeException("Database Error: " + e.getMessage());
         }
     }
 }

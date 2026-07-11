@@ -1,21 +1,32 @@
 package io.yunxi.mcp.pdf;
 
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
+import io.yunxi.mcp.common.util.ToolResult;
 import lombok.extern.slf4j.Slf4j;
+import io.yunxi.mcp.common.util.ToolResult;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import io.yunxi.mcp.common.util.ToolResult;
 import org.apache.pdfbox.pdmodel.PDPage;
+import io.yunxi.mcp.common.util.ToolResult;
 import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
+import io.yunxi.mcp.common.util.ToolResult;
 import org.apache.pdfbox.pdmodel.encryption.StandardDecryptionMaterial;
+import io.yunxi.mcp.common.util.ToolResult;
 import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
+import io.yunxi.mcp.common.util.ToolResult;
 import org.apache.pdfbox.text.PDFTextStripper;
+import io.yunxi.mcp.common.util.ToolResult;
 import org.springframework.beans.factory.annotation.Autowired;
+import io.yunxi.mcp.common.util.ToolResult;
 import org.springframework.stereotype.Component;
+import io.yunxi.mcp.common.util.ToolResult;
 
 import java.io.File;
+import io.yunxi.mcp.common.util.ToolResult;
 import java.io.IOException;
+import io.yunxi.mcp.common.util.ToolResult;
 import java.util.*;
+import io.yunxi.mcp.common.util.ToolResult;
 
 /**
  * PDF 处理工具
@@ -44,34 +55,65 @@ public class PdfTools {
         }
 
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("pdf_operation")
-                    .description(
-                            "Process PDF files: extract text, get info, merge, split, rotate pages, encrypt, decrypt. " +
+
+
+        public String getName() {
+
+
+            return "pdf_operation";
+
+
+        }
+
+
+
+        @Override
+
+
+        public String getDescription() {
+
+
+            return "Process PDF files: extract text, get info, merge, split, rotate pages, encrypt, decrypt. " +
                                     "处理 PDF 文件：提取文本、获取信息、合并、拆分、旋转页面、加密、解密。 " +
                                     "Use this when you need to: read PDF content, combine multiple PDFs, extract specific pages, or protect sensitive documents. " +
                                     "适用于：文档阅读、报告合并、页面提取、文档保护等场景。 " +
                                     "Common use cases: document reading, report merging, page extraction, document protection. " +
-                                    "典型用例：文档阅读、报告合并、页面提取、文档保护。")
-                    .inputSchema(schema(
+                                    "典型用例：文档阅读、报告合并、页面提取、文档保护。";
+
+
+        }
+
+
+
+        @Override
+
+
+        @SuppressWarnings("unchecked")
+
+
+        public Map<String, Object> getInputSchema() {
+
+
+            return (Map<String, Object>) (Map) schema(
                             "action", "string", "Operation type: info, extract_text, merge, split, rotate, encrypt, decrypt | 操作类型",
                             "input_path", "string", "Input PDF file path | 输入 PDF 文件路径",
                             "output_path", "string", "Output file path (optional) | 输出文件路径",
                             "pages", "string", "Page range like '1-5' or '1,3,5' (optional) | 页面范围",
                             "degrees", "integer", "Rotation degrees: 90, 180, 270 (for rotate) | 旋转角度",
                             "password", "string", "Password for encrypt/decrypt | 加密/解密密码",
-                            "input_files", "array", "Input files for merge (array of paths) | 合并的输入文件列表"))
-                    .build();
+                            "input_files", "array", "Input files for merge (array of paths) | 合并的输入文件列表");
+
+
         }
 
+
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             String action = (String) args.getOrDefault("action", "info");
             String inputPath = (String) args.get("input_path");
 
             if (inputPath == null || inputPath.isBlank()) {
-                return ToolResult.error("Error: input_path is required");
+                throw new RuntimeException("Error: input_path is required");
             }
 
             try {
@@ -87,7 +129,7 @@ public class PdfTools {
                 };
             } catch (Exception e) {
                 log.error("PDF operation error: {}", e.getMessage(), e);
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }
@@ -95,7 +137,7 @@ public class PdfTools {
     /**
      * 获取 PDF 信息
      */
-    public ToolResult getPdfInfo(String inputPath) {
+    public String getPdfInfo(String inputPath) {
         try (PDDocument document = PDDocument.load(new File(inputPath))) {
             Map<String, Object> info = new HashMap<>();
             info.put("file", inputPath);
@@ -113,9 +155,9 @@ public class PdfTools {
                 info.put("metadata", metadata);
             }
 
-            return ToolResult.text(formatPdfInfo(info));
+            return (formatPdfInfo(info));
         } catch (IOException e) {
-            return ToolResult.error("Error: Cannot read PDF - " + e.getMessage());
+            throw new RuntimeException("Error: Cannot read PDF - " + e.getMessage());
         }
     }
 
@@ -139,7 +181,7 @@ public class PdfTools {
     /**
      * 提取文本
      */
-    public ToolResult extractText(String inputPath, String pages) {
+    public String extractText(String inputPath, String pages) {
         try (PDDocument document = PDDocument.load(new File(inputPath))) {
             PDFTextStripper stripper = new PDFTextStripper();
 
@@ -150,9 +192,9 @@ public class PdfTools {
             }
 
             String text = stripper.getText(document);
-            return ToolResult.text("📝 Extracted Text:\n" + text);
+            return ("📝 Extracted Text:\n" + text);
         } catch (IOException e) {
-            return ToolResult.error("Error: Cannot extract text - " + e.getMessage());
+            throw new RuntimeException("Error: Cannot extract text - " + e.getMessage());
         }
     }
 
@@ -160,12 +202,12 @@ public class PdfTools {
      * 合并 PDF
      */
     @SuppressWarnings("unchecked")
-    public ToolResult mergePdfs(Map<String, Object> args) {
+    public String mergePdfs(Map<String, Object> args) {
         List<String> inputFiles = (List<String>) args.get("input_files");
         String outputPath = (String) args.getOrDefault("output_path", "merged.pdf");
 
         if (inputFiles == null || inputFiles.isEmpty()) {
-            return ToolResult.error("Error: input_files is required for merge");
+            throw new RuntimeException("Error: input_files is required for merge");
         }
 
         try (PDDocument merged = new PDDocument()) {
@@ -177,16 +219,16 @@ public class PdfTools {
                 }
             }
             merged.save(outputPath);
-            return ToolResult.text(String.format("✅ Merged %d PDF files into: %s", inputFiles.size(), outputPath));
+            return (String.format("✅ Merged %d PDF files into: %s", inputFiles.size(), outputPath));
         } catch (IOException e) {
-            return ToolResult.error("Error: Cannot merge PDFs - " + e.getMessage());
+            throw new RuntimeException("Error: Cannot merge PDFs - " + e.getMessage());
         }
     }
 
     /**
      * 拆分 PDF
      */
-    public ToolResult splitPdf(String inputPath, String pages, String outputPath) {
+    public String splitPdf(String inputPath, String pages, String outputPath) {
         String outPath = outputPath != null ? outputPath : "split.pdf";
 
         try (PDDocument document = PDDocument.load(new File(inputPath))) {
@@ -198,16 +240,16 @@ public class PdfTools {
             }
 
             splitDoc.save(outPath);
-            return ToolResult.text(String.format("✅ Extracted %d pages to: %s", range[1] - range[0] + 1, outPath));
+            return (String.format("✅ Extracted %d pages to: %s", range[1] - range[0] + 1, outPath));
         } catch (IOException e) {
-            return ToolResult.error("Error: Cannot split PDF - " + e.getMessage());
+            throw new RuntimeException("Error: Cannot split PDF - " + e.getMessage());
         }
     }
 
     /**
      * 旋转 PDF
      */
-    public ToolResult rotatePdf(String inputPath, Integer degrees, String pages, String outputPath) {
+    public String rotatePdf(String inputPath, Integer degrees, String pages, String outputPath) {
         int rot = degrees != null ? degrees : 90;
         String outPath = outputPath != null ? outputPath : "rotated.pdf";
 
@@ -222,18 +264,18 @@ public class PdfTools {
             }
 
             document.save(outPath);
-            return ToolResult.text(String.format("✅ Rotated %d pages by %d degrees, saved to: %s", range[1] - range[0] + 1, rot, outPath));
+            return (String.format("✅ Rotated %d pages by %d degrees, saved to: %s", range[1] - range[0] + 1, rot, outPath));
         } catch (IOException e) {
-            return ToolResult.error("Error: Cannot rotate PDF - " + e.getMessage());
+            throw new RuntimeException("Error: Cannot rotate PDF - " + e.getMessage());
         }
     }
 
     /**
      * 加密 PDF
      */
-    public ToolResult encryptPdf(String inputPath, String password, String outputPath) {
+    public String encryptPdf(String inputPath, String password, String outputPath) {
         if (password == null || password.isBlank()) {
-            return ToolResult.error("Error: password is required for encryption");
+            throw new RuntimeException("Error: password is required for encryption");
         }
 
         String outPath = outputPath != null ? outputPath : "encrypted.pdf";
@@ -243,27 +285,27 @@ public class PdfTools {
                     new AccessPermission());
             document.protect(policy);
             document.save(outPath);
-            return ToolResult.text(String.format("✅ PDF encrypted and saved to: %s", outPath));
+            return (String.format("✅ PDF encrypted and saved to: %s", outPath));
         } catch (IOException e) {
-            return ToolResult.error("Error: Cannot encrypt PDF - " + e.getMessage());
+            throw new RuntimeException("Error: Cannot encrypt PDF - " + e.getMessage());
         }
     }
 
     /**
      * 解密 PDF
      */
-    public ToolResult decryptPdf(String inputPath, String password, String outputPath) {
+    public String decryptPdf(String inputPath, String password, String outputPath) {
         if (password == null || password.isBlank()) {
-            return ToolResult.error("Error: password is required for decryption");
+            throw new RuntimeException("Error: password is required for decryption");
         }
 
         String outPath = outputPath != null ? outputPath : "decrypted.pdf";
 
         try (PDDocument document = PDDocument.load(new File(inputPath), password)) {
             document.save(outPath);
-            return ToolResult.text(String.format("✅ PDF decrypted and saved to: %s", outPath));
+            return (String.format("✅ PDF decrypted and saved to: %s", outPath));
         } catch (IOException e) {
-            return ToolResult.error("Error: Cannot decrypt PDF - " + e.getMessage());
+            throw new RuntimeException("Error: Cannot decrypt PDF - " + e.getMessage());
         }
     }
 

@@ -29,9 +29,11 @@ mcp:
     enabled: true
     type: api-token
     token: ${MCP_API_TOKEN:your-secure-token}
-    whitelist:
-      - /mcp/health
-      - /mcp/info
+    # v2.0 仅暴露 /mcp/sse 与 /mcp/message 两个端点，无独立健康检查/信息端点。
+    # 如需放行特定路径（如反向代理的健康探测）可在此配置，例如：
+    # whitelist:
+    #   - /mcp/health
+    whitelist: []
 ```
 
 #### Bearer Token (JWT) 模式
@@ -42,8 +44,8 @@ mcp:
     enabled: true
     type: bearer
     jwt-secret: ${MCP_JWT_SECRET:your-jwt-secret-at-least-256-bits}
-    whitelist:
-      - /mcp/health
+    # v2.0 无 /mcp/health 等独立端点，白名单默认留空即可
+    whitelist: []
 ```
 
 #### 禁用认证（开发环境）
@@ -62,7 +64,7 @@ mcp:
 | `mcp.auth.type` | 认证类型：`api-token` / `bearer` / `none` | `api-token` |
 | `mcp.auth.token` | API Token（api-token 模式使用） | - |
 | `mcp.auth.jwt-secret` | JWT Secret（bearer 模式使用） | - |
-| `mcp.auth.whitelist` | 白名单路径列表 | `/mcp/health`, `/mcp/info` |
+| `mcp.auth.whitelist` | 白名单路径列表（Ant 风格，匹配 `/mcp/*`；v2.0 无默认公开端点，默认空） | `[]` |
 | `mcp.auth.header-name` | API Token 请求头名称 | `X-MCP-Token` |
 | `mcp.auth.bearer-prefix` | Bearer Token 前缀 | `Bearer ` |
 
@@ -73,7 +75,7 @@ mcp:
 **请求示例：**
 
 ```http
-POST /mcp
+POST /mcp/message
 X-MCP-Token: your-secure-token
 Content-Type: application/json
 
@@ -87,7 +89,7 @@ Content-Type: application/json
 **或使用 Authorization 头：**
 
 ```http
-POST /mcp
+POST /mcp/message
 Authorization: Bearer your-secure-token
 Content-Type: application/json
 
@@ -103,7 +105,7 @@ Content-Type: application/json
 **请求示例：**
 
 ```http
-POST /mcp
+POST /mcp/message
 Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 Content-Type: application/json
 
@@ -154,12 +156,14 @@ Content-Type: application/json
 
 5. **最小白名单**：白名单路径应最小化，仅保留必要的健康检查端点
 
-## 集成到现有 MCP 模块
+## 集成到现有 MCP 模块（v2.0）
 
-如果你的 MCP 模块已经继承了 `AbstractMcpController`，认证会自动生效：
+v2.0 的 HTTP/SSE 模块基于 Spring + `McpServerFactory`（SSE 传输，端点为 `/mcp/sse` 与 `/mcp/message`）。认证过滤器会拦截这些路径：
 
 1. 添加 mcp-common 依赖
 2. 在 application.yml 中配置认证
 3. 重启服务
 
-无需修改代码，认证过滤器会自动拦截 `/mcp/*` 路径。
+无需修改业务代码，认证过滤器会自动拦截 `/mcp/sse` 与 `/mcp/message` 路径。
+
+> 注：v1.0 的 `AbstractMcpController` 基类已在 v2.0 移除，HTTP 模块改为通过 `McpServerFactory` 自动装配 `ToolHandler` Bean。

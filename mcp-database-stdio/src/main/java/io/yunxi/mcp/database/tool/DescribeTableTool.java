@@ -2,8 +2,6 @@ package io.yunxi.mcp.database.tool;
 
 import io.yunxi.mcp.database.DatabaseMcpServer;
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 
 import java.sql.*;
 import java.util.*;
@@ -20,26 +18,32 @@ public class DescribeTableTool implements ToolHandler {
     }
 
     @Override
-    public ToolDefinition getDefinition() {
-        return ToolDefinition.builder()
-                .name("describe_table")
-                .description("Get the structure of a specific table including columns, types, and constraints")
-                .inputSchema(Map.of(
-                        "type", "object",
-                        "properties", Map.of(
-                                "table", Map.of(
-                                        "type", "string",
-                                        "description", "Table name to describe")),
-                        "required", List.of("table")))
-                .build();
+    public String getName() {
+        return "describe_table";
     }
 
     @Override
-    public ToolResult execute(Map<String, Object> arguments) {
+    public String getDescription() {
+        return "Get the structure of a specific table including columns, types, and constraints";
+    }
+
+    @Override
+    public Map<String, Object> getInputSchema() {
+        return Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "table", Map.of(
+                                "type", "string",
+                                "description", "Table name to describe")),
+                "required", List.of("table"));
+    }
+
+    @Override
+    public String execute(Map<String, Object> arguments) {
         String tableName = (String) arguments.get("table");
 
         if (tableName == null || tableName.isBlank()) {
-            return ToolResult.error("Table name is required");
+            throw new RuntimeException("Table name is required");
         }
 
         try (Connection conn = server.getConnection()) {
@@ -87,9 +91,9 @@ public class DescribeTableTool implements ToolHandler {
                 }
             }
 
-            return ToolResult.text(sb.toString());
+            return sb.toString();
         } catch (SQLException e) {
-            return ToolResult.error("Database Error: " + e.getMessage());
+            throw new RuntimeException("Database Error: " + e.getMessage());
         }
     }
 }

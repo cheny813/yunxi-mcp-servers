@@ -4,9 +4,6 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.api.model.*;
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,21 +73,40 @@ public class DockerTools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("list_containers")
-                    .description(
-                            "List Docker containers. " +
+
+        public String getName() {
+
+            return "list_containers";
+
+        }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "List Docker containers. " +
                                     "列出Docker容器。 " +
                                     "Use this when you need to check running containers, verify deployment, or manage container lifecycle. "
                                     +
                                     "适用于检查运行中的容器、验证部署或管理容器生命周期等场景。 " +
                                     "Common use cases: deployment verification, container monitoring, resource management. "
                                     +
-                                    "典型用例：部署验证、容器监控、资源管理。")
-                    .inputSchema(schema("all", "boolean", "Show all containers (default: false). | 显示所有容器（默认: false）。"))
-                    .build();
+                                    "典型用例：部署验证、容器监控、资源管理。";
+
         }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) schema("all", "boolean", "Show all containers (default: false). | 显示所有容器（默认: false）。");
+
+        }
+
 
         /**
          * 执行列出容器操作
@@ -99,7 +115,7 @@ public class DockerTools {
          * @return 工具执行结果，包含容器列表
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             boolean all = args.containsKey("all") && (Boolean) args.get("all");
             try {
                 ListContainersCmd cmd = dockerClient.listContainersCmd().withShowAll(all);
@@ -113,9 +129,9 @@ public class DockerTools {
                     sb.append("Status: ").append(c.getStatus()).append("\n");
                     sb.append("Names: ").append(String.join(", ", c.getNames())).append("\n\n");
                 }
-                return ToolResult.text(sb.toString());
+                return (sb.toString());
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }
@@ -150,20 +166,39 @@ public class DockerTools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("list_images")
-                    .description(
-                            "List Docker images. " +
+
+        public String getName() {
+
+            return "list_images";
+
+        }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "List Docker images. " +
                                     "列出Docker镜像。 " +
                                     "Use this when you need to check available images, verify image sizes, or manage local images. "
                                     +
                                     "适用于检查可用镜像、验证镜像大小或管理本地镜像等场景。 " +
                                     "Common use cases: image management, size optimization, deployment preparation. " +
-                                    "典型用例：镜像管理、大小优化、部署准备。")
-                    .inputSchema(emptySchema())
-                    .build();
+                                    "典型用例：镜像管理、大小优化、部署准备。";
+
         }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) emptySchema();
+
+        }
+
 
         /**
          * 执行列出镜像操作
@@ -172,7 +207,7 @@ public class DockerTools {
          * @return 工具执行结果，包含镜像列表
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             try {
                 List<Image> images = dockerClient.listImagesCmd().exec();
 
@@ -184,9 +219,9 @@ public class DockerTools {
                     sb.append("Tags: ").append(tags != null ? String.join(", ", tags) : "<none>").append("\n");
                     sb.append("Size: ").append(img.getSize() / 1024 / 1024).append(" MB\n\n");
                 }
-                return ToolResult.text(sb.toString());
+                return (sb.toString());
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }
@@ -221,21 +256,40 @@ public class DockerTools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("pull_image")
-                    .description(
-                            "Pull a Docker image from registry. " +
+
+        public String getName() {
+
+            return "pull_image";
+
+        }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "Pull a Docker image from registry. " +
                                     "从仓库拉取Docker镜像。 " +
                                     "Use this when you need to download images for deployment, update local images, or prepare environment. "
                                     +
                                     "适用于下载部署镜像、更新本地镜像或准备环境等场景。 " +
                                     "Common use cases: deployment preparation, environment setup, image updates. " +
-                                    "典型用例：部署准备、环境设置、镜像更新。")
-                    .inputSchema(schema("image", "string",
-                            "Image name (e.g., nginx:latest, redis:7). | 镜像名称。示例: 'nginx:latest', 'redis:7'"))
-                    .build();
+                                    "典型用例：部署准备、环境设置、镜像更新。";
+
         }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) schema("image", "string",
+                            "Image name (e.g., nginx:latest, redis:7). | 镜像名称。示例: 'nginx:latest', 'redis:7'");
+
+        }
+
 
         /**
          * 执行拉取镜像操作
@@ -244,14 +298,14 @@ public class DockerTools {
          * @return 工具执行结果
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             String image = (String) args.get("image");
             try {
                 PullImageCmd cmd = dockerClient.pullImageCmd(image);
                 cmd.exec(new PullImageResultCallback()).awaitCompletion();
-                return ToolResult.text("Pulled: " + image);
+                return ("Pulled: " + image);
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }
@@ -286,21 +340,40 @@ public class DockerTools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("start_container")
-                    .description(
-                            "Start a Docker container. " +
+
+        public String getName() {
+
+            return "start_container";
+
+        }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "Start a Docker container. " +
                                     "启动Docker容器。 " +
                                     "Use this when you need to restart stopped containers, deploy services, or scale applications. "
                                     +
                                     "适用于重启停止的容器、部署服务或扩展应用等场景。 " +
                                     "Common use cases: service deployment, container restart, scaling. " +
-                                    "典型用例：服务部署、容器重启、扩展。")
-                    .inputSchema(schema("container_id", "string",
-                            "Container ID or name. Example: 'abc123', 'my-container' | 容器ID或名称。示例: 'abc123', 'my-container'"))
-                    .build();
+                                    "典型用例：服务部署、容器重启、扩展。";
+
         }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) schema("container_id", "string",
+                            "Container ID or name. Example: 'abc123', 'my-container' | 容器ID或名称。示例: 'abc123', 'my-container'");
+
+        }
+
 
         /**
          * 执行启动容器操作
@@ -309,13 +382,13 @@ public class DockerTools {
          * @return 工具执行结果
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             String containerId = (String) args.get("container_id");
             try {
                 dockerClient.startContainerCmd(containerId).exec();
-                return ToolResult.text("Started container: " + containerId);
+                return ("Started container: " + containerId);
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }
@@ -350,21 +423,40 @@ public class DockerTools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("stop_container")
-                    .description(
-                            "Stop a Docker container. " +
+
+        public String getName() {
+
+            return "stop_container";
+
+        }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "Stop a Docker container. " +
                                     "停止Docker容器。 " +
                                     "Use this when you need to stop running containers, perform maintenance, or free resources. "
                                     +
                                     "适用于停止运行中的容器、执行维护或释放资源等场景。 " +
                                     "Common use cases: maintenance, resource management, graceful shutdown. " +
-                                    "典型用例：维护、资源管理、优雅关闭。")
-                    .inputSchema(schema("container_id", "string",
-                            "Container ID or name. Example: 'abc123', 'my-container' | 容器ID或名称。示例: 'abc123', 'my-container'"))
-                    .build();
+                                    "典型用例：维护、资源管理、优雅关闭。";
+
         }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) schema("container_id", "string",
+                            "Container ID or name. Example: 'abc123', 'my-container' | 容器ID或名称。示例: 'abc123', 'my-container'");
+
+        }
+
 
         /**
          * 执行停止容器操作
@@ -373,13 +465,13 @@ public class DockerTools {
          * @return 工具执行结果
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             String containerId = (String) args.get("container_id");
             try {
                 dockerClient.stopContainerCmd(containerId).exec();
-                return ToolResult.text("Stopped container: " + containerId);
+                return ("Stopped container: " + containerId);
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }

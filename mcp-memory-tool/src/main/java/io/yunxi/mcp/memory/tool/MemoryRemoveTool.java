@@ -1,12 +1,11 @@
 package io.yunxi.mcp.memory.tool;
 
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import io.yunxi.mcp.memory.store.MemoryStoreInterface;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -66,27 +65,34 @@ public class MemoryRemoveTool implements ToolHandler {
      * @return 工具定义对象
      */
     @Override
-    public ToolDefinition getDefinition() {
-        return ToolDefinition.builder()
-                .name("memory_remove")
-                .description("删除指定的记忆条目（支持多用户隔离）")
-                .inputSchema(Map.of(
-                        "type", "object",
-                        "properties", Map.of(
-                                "userId", Map.of(
-                                        "type", "string",
-                                        "description", "用户ID（必填，用于多用户隔离）"),
-                                "target", Map.of(
-                                        "type", "string",
-                                        "description", "目标存储：'memory' 或 'user'",
-                                        "enum", new String[]{"memory", "user"}),
-                                "entryId", Map.of(
-                                        "type", "string",
-                                        "description", "要删除的记忆条目ID")
-                        ),
-                        "required", new String[]{"userId", "target", "entryId"}
-                ))
-                .build();
+    public String getName() {
+        return "memory_remove";
+    }
+
+    @Override
+    public String getDescription() {
+        return "删除指定的记忆条目（支持多用户隔离）";
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getInputSchema() {
+        return (Map<String, Object>) (Map) Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "userId", Map.of(
+                                "type", "string",
+                                "description", "用户ID（必填，用于多用户隔离）"),
+                        "target", Map.of(
+                                "type", "string",
+                                "description", "目标存储：'memory' 或 'user'",
+                                "enum", List.of("memory", "user")),
+                        "entryId", Map.of(
+                                "type", "string",
+                                "description", "要删除的记忆条目ID")
+                ),
+                "required", List.of("userId", "target", "entryId")
+        );
     }
 
     /**
@@ -104,7 +110,7 @@ public class MemoryRemoveTool implements ToolHandler {
      * @return 操作结果，包含成功信息或错误原因
      */
     @Override
-    public ToolResult execute(Map<String, Object> arguments) {
+    public String execute(Map<String, Object> arguments) {
         try {
             // 提取参数
             String userId = (String) arguments.get("userId");
@@ -113,13 +119,13 @@ public class MemoryRemoveTool implements ToolHandler {
 
             // 参数校验
             if (userId == null || userId.isBlank()) {
-                return ToolResult.error("参数 userId 不能为空（用于多用户隔离）");
+                throw new RuntimeException("参数 userId 不能为空（用于多用户隔离）");
             }
             if (target == null || target.isBlank()) {
-                return ToolResult.error("参数 target 不能为空");
+                throw new RuntimeException("参数 target 不能为空");
             }
             if (entryId == null || entryId.isBlank()) {
-                return ToolResult.error("参数 entryId 不能为空");
+                throw new RuntimeException("参数 entryId 不能为空");
             }
 
             // 调用存储服务删除记忆
@@ -134,11 +140,11 @@ public class MemoryRemoveTool implements ToolHandler {
 
             log.info("Memory entry removed: userId={}, target={}, entryId={}", userId, target, entryId);
 
-            return ToolResult.text(result.toString());
+            return result.toString();
 
         } catch (Exception e) {
             log.error("Failed to remove memory entry", e);
-            return ToolResult.error("删除记忆失败: " + e.getMessage());
+            throw new RuntimeException("删除记忆失败: " + e.getMessage());
         }
     }
 }

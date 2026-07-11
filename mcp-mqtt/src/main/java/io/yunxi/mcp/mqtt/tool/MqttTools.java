@@ -3,8 +3,6 @@ package io.yunxi.mcp.mqtt.tool;
 import io.yunxi.mcp.mqtt.service.MqttService;
 import io.yunxi.mcp.mqtt.service.MqttService.CachedMessage;
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -33,13 +31,32 @@ public class MqttTools {
     public ToolHandler subscribe() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("mqtt_subscribe")
-                        .description("Subscribe to MQTT topic to receive real-time sensor data. " +
+
+            public String getName() {
+
+                return "mqtt_subscribe";
+
+            }
+
+
+            @Override
+
+            public String getDescription() {
+
+                return "Subscribe to MQTT topic to receive real-time sensor data. " +
                                 "Use this to start receiving messages from sensors like temperature, humidity, etc. " +
-                                "| 订阅MQTT主题以接收实时传感器数据。用于开始接收温度、湿度等传感器的消息。")
-                        .inputSchema(Map.of(
+                                "| 订阅MQTT主题以接收实时传感器数据。用于开始接收温度、湿度等传感器的消息。";
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of(
                                 "type", "object",
                                 "properties", Map.of(
                                         "topic", Map.of(
@@ -56,20 +73,21 @@ public class MqttTools {
                                         )
                                 ),
                                 "required", List.of("topic")
-                        ))
-                        .build();
+                        );
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+            public String execute(Map<String, Object> arguments) {
                 try {
                     String topic = (String) arguments.get("topic");
                     Integer qos = arguments.containsKey("qos") ? ((Number) arguments.get("qos")).intValue() : 1;
                     mqttService.subscribe(topic, qos);
-                    return ToolResult.text("Subscribed successfully! Topic: " + topic + ", QoS: " + qos);
+                    return ("Subscribed successfully! Topic: " + topic + ", QoS: " + qos);
                 } catch (Exception e) {
                     log.error("Subscribe failed", e);
-                    return ToolResult.error("Subscribe failed: " + e.getMessage());
+                    throw new RuntimeException("Subscribe failed: " + e.getMessage());
                 }
             }
         };
@@ -81,11 +99,30 @@ public class MqttTools {
     public ToolHandler unsubscribe() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("mqtt_unsubscribe")
-                        .description("Unsubscribe from MQTT topic. | 取消订阅MQTT主题。")
-                        .inputSchema(Map.of(
+
+            public String getName() {
+
+                return "mqtt_unsubscribe";
+
+            }
+
+
+            @Override
+
+            public String getDescription() {
+
+                return "Unsubscribe from MQTT topic. | 取消订阅MQTT主题。";
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of(
                                 "type", "object",
                                 "properties", Map.of(
                                         "topic", Map.of(
@@ -94,19 +131,20 @@ public class MqttTools {
                                         )
                                 ),
                                 "required", List.of("topic")
-                        ))
-                        .build();
+                        );
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+            public String execute(Map<String, Object> arguments) {
                 try {
                     String topic = (String) arguments.get("topic");
                     mqttService.unsubscribe(topic);
-                    return ToolResult.text("Unsubscribed successfully! Topic: " + topic);
+                    return ("Unsubscribed successfully! Topic: " + topic);
                 } catch (Exception e) {
                     log.error("Unsubscribe failed", e);
-                    return ToolResult.error("Unsubscribe failed: " + e.getMessage());
+                    throw new RuntimeException("Unsubscribe failed: " + e.getMessage());
                 }
             }
         };
@@ -118,12 +156,31 @@ public class MqttTools {
     public ToolHandler publish() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("mqtt_publish")
-                        .description("Publish message to MQTT topic. Use this to send commands or data to devices. " +
-                                "| 发布消息到MQTT主题。用于向设备发送命令或数据。")
-                        .inputSchema(Map.of(
+
+            public String getName() {
+
+                return "mqtt_publish";
+
+            }
+
+
+            @Override
+
+            public String getDescription() {
+
+                return "Publish message to MQTT topic. Use this to send commands or data to devices. " +
+                                "| 发布消息到MQTT主题。用于向设备发送命令或数据。";
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of(
                                 "type", "object",
                                 "properties", Map.of(
                                         "topic", Map.of(
@@ -146,12 +203,13 @@ public class MqttTools {
                                         )
                                 ),
                                 "required", List.of("topic", "payload")
-                        ))
-                        .build();
+                        );
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+            public String execute(Map<String, Object> arguments) {
                 try {
                     String topic = (String) arguments.get("topic");
                     String payload = (String) arguments.get("payload");
@@ -159,10 +217,10 @@ public class MqttTools {
                     Boolean retained = arguments.containsKey("retained") ? (Boolean) arguments.get("retained") : false;
                     
                     mqttService.publish(topic, payload, qos, retained);
-                    return ToolResult.text("Published successfully! Topic: " + topic + ", QoS: " + qos);
+                    return ("Published successfully! Topic: " + topic + ", QoS: " + qos);
                 } catch (Exception e) {
                     log.error("Publish failed", e);
-                    return ToolResult.error("Publish failed: " + e.getMessage());
+                    throw new RuntimeException("Publish failed: " + e.getMessage());
                 }
             }
         };
@@ -174,15 +232,34 @@ public class MqttTools {
     public ToolHandler queryRealtime() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("mqtt_query_realtime")
-                        .description("Query recent real-time MQTT messages from memory cache. " +
+
+            public String getName() {
+
+                return "mqtt_query_realtime";
+
+            }
+
+
+            @Override
+
+            public String getDescription() {
+
+                return "Query recent real-time MQTT messages from memory cache. " +
                                 "Use this to get the latest sensor data without querying database. " +
                                 "| 从内存缓存查询最近的实时MQTT消息。用于获取最新的传感器数据，无需查询数据库。 " +
                                 "Note: For historical data, use mcp-database to query MySQL. " +
-                                "注意：查询历史数据请使用 mcp-database 查询 MySQL。")
-                        .inputSchema(Map.of(
+                                "注意：查询历史数据请使用 mcp-database 查询 MySQL。";
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of(
                                 "type", "object",
                                 "properties", Map.of(
                                         "topic", Map.of(
@@ -197,12 +274,13 @@ public class MqttTools {
                                                 "default", 20
                                         )
                                 )
-                        ))
-                        .build();
+                        );
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+            public String execute(Map<String, Object> arguments) {
                 try {
                     String topic = (String) arguments.get("topic");
                     Integer limit = arguments.containsKey("limit") ? ((Number) arguments.get("limit")).intValue() : 20;
@@ -210,7 +288,7 @@ public class MqttTools {
                     List<CachedMessage> messages = mqttService.queryCachedMessages(topic, limit);
 
                     if (messages.isEmpty()) {
-                        return ToolResult.text("No cached messages found. Cache size: " + mqttService.getCacheSize());
+                        return ("No cached messages found. Cache size: " + mqttService.getCacheSize());
                     }
 
                     StringBuilder result = new StringBuilder();
@@ -228,10 +306,10 @@ public class MqttTools {
                                         : msg.getPayload()));
                     }
 
-                    return ToolResult.text(result.toString());
+                    return (result.toString());
                 } catch (Exception e) {
                     log.error("Query realtime failed", e);
-                    return ToolResult.error("Query failed: " + e.getMessage());
+                    throw new RuntimeException("Query failed: " + e.getMessage());
                 }
             }
         };
@@ -243,20 +321,40 @@ public class MqttTools {
     public ToolHandler status() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("mqtt_status")
-                        .description("Get MQTT connection status and subscribed topics. " +
-                                "| 获取MQTT连接状态和已订阅的主题列表。")
-                        .inputSchema(Map.of(
-                                "type", "object",
-                                "properties", Map.of()
-                        ))
-                        .build();
+
+            public String getName() {
+
+                return "mqtt_status";
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+
+            public String getDescription() {
+
+                return "Get MQTT connection status and subscribed topics. " +
+                                "| 获取MQTT连接状态和已订阅的主题列表。";
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of(
+                                "type", "object",
+                                "properties", Map.of()
+                        );
+
+            }
+
+
+            @Override
+            public String execute(Map<String, Object> arguments) {
                 try {
                     StringBuilder result = new StringBuilder();
                     result.append("MQTT Status:\n");
@@ -268,10 +366,10 @@ public class MqttTools {
                         result.append("  - ").append(topic).append("\n");
                     }
 
-                    return ToolResult.text(result.toString());
+                    return (result.toString());
                 } catch (Exception e) {
                     log.error("Get status failed", e);
-                    return ToolResult.error("Get status failed: " + e.getMessage());
+                    throw new RuntimeException("Get status failed: " + e.getMessage());
                 }
             }
         };

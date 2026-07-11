@@ -4,9 +4,6 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.elasticsearch.indices.*;
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -74,23 +71,42 @@ public class ElasticsearchTools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("search")
-                    .description(
-                            "Search documents in Elasticsearch. " +
+
+        public String getName() {
+
+            return "search";
+
+        }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "Search documents in Elasticsearch. " +
                                     "在Elasticsearch中搜索文档。 " +
                                     "Use this when you need to search logs, find documents, or analyze indexed data. " +
                                     "适用于搜索日志、查找文档或分析索引数据等场景。 " +
                                     "Common use cases: log search, document retrieval, data analysis. " +
-                                    "典型用例：日志搜索、文档检索、数据分析。")
-                    .inputSchema(schema(
+                                    "典型用例：日志搜索、文档检索、数据分析。";
+
+        }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) schema(
                             "index", "string", "Index name. Example: 'logs', 'products' | 索引名称。示例: 'logs', 'products'",
                             "query", "string",
                             "Search query (Lucene syntax). Example: 'status:200' | 搜索查询（Lucene语法）。示例: 'status:200'",
-                            "size", "integer", "Number of results (default: 10). Example: 20 | 结果数量（默认: 10）。示例: 20"))
-                    .build();
+                            "size", "integer", "Number of results (default: 10). Example: 20 | 结果数量（默认: 10）。示例: 20");
+
         }
+
 
         /**
          * 执行搜索操作
@@ -107,7 +123,7 @@ public class ElasticsearchTools {
          * @return 工具执行结果，包含搜索结果信息
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             String index = (String) args.get("index");
             String query = (String) args.getOrDefault("query", "*");
             int size = args.containsKey("size") ? ((Number) args.get("size")).intValue() : 10;
@@ -121,9 +137,9 @@ public class ElasticsearchTools {
 
                 StringBuilder sb = new StringBuilder();
                 sb.append("Found ").append(response.hits().total().value()).append(" hit(s)\n");
-                return ToolResult.text(sb.toString());
+                return (sb.toString());
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }
@@ -158,23 +174,42 @@ public class ElasticsearchTools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("index_document")
-                    .description(
-                            "Index a document into Elasticsearch. " +
+
+        public String getName() {
+
+            return "index_document";
+
+        }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "Index a document into Elasticsearch. " +
                                     "将文档索引到Elasticsearch。 " +
                                     "Use this when you need to store logs, add documents, or update indexed data. " +
                                     "适用于存储日志、添加文档或更新索引数据等场景。 " +
                                     "Common use cases: log ingestion, document storage, data indexing. " +
-                                    "典型用例：日志采集、文档存储、数据索引。")
-                    .inputSchema(schema(
+                                    "典型用例：日志采集、文档存储、数据索引。";
+
+        }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) schema(
                             "index", "string", "Index name. Example: 'logs', 'products' | 索引名称。示例: 'logs', 'products'",
                             "id", "string", "Document ID (optional). Example: 'doc-001' | 文档ID（可选）。示例: 'doc-001'",
                             "document", "string",
-                            "JSON document. Example: '{\"title\":\"test\"}' | JSON文档。示例: '{\"title\":\"test\"}'"))
-                    .build();
+                            "JSON document. Example: '{\"title\":\"test\"}' | JSON文档。示例: '{\"title\":\"test\"}'");
+
         }
+
 
         /**
          * 执行索引操作
@@ -191,7 +226,7 @@ public class ElasticsearchTools {
          * @return 工具执行结果，包含索引的文档 ID 和结果
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             String index = (String) args.get("index");
             String id = (String) args.get("id");
             String document = (String) args.get("document");
@@ -207,9 +242,9 @@ public class ElasticsearchTools {
                 } else {
                     response = client.index(i -> i.index(index).document(doc));
                 }
-                return ToolResult.text("Indexed document: " + response.id() + "\nResult: " + response.result());
+                return ("Indexed document: " + response.id() + "\nResult: " + response.result());
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }
@@ -244,20 +279,39 @@ public class ElasticsearchTools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("list_indices")
-                    .description(
-                            "List all Elasticsearch indices. " +
+
+        public String getName() {
+
+            return "list_indices";
+
+        }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "List all Elasticsearch indices. " +
                                     "列出所有Elasticsearch索引。 " +
                                     "Use this when you need to explore available data, manage indices, or check storage. "
                                     +
                                     "适用于探索可用数据、管理索引或检查存储等场景。 " +
                                     "Common use cases: index discovery, storage management, data exploration. " +
-                                    "典型用例：索引发现、存储管理、数据探索。")
-                    .inputSchema(emptySchema())
-                    .build();
+                                    "典型用例：索引发现、存储管理、数据探索。";
+
         }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) emptySchema();
+
+        }
+
 
         /**
          * 执行列出索引操作
@@ -269,7 +323,7 @@ public class ElasticsearchTools {
          * @return 工具执行结果，包含索引列表
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             try {
                 GetIndexResponse response = client.indices().get(a -> a.index("*"));
 
@@ -278,9 +332,9 @@ public class ElasticsearchTools {
                 for (String indexName : response.result().keySet()) {
                     sb.append("- ").append(indexName).append("\n");
                 }
-                return ToolResult.text(sb.toString());
+                return (sb.toString());
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }
@@ -315,22 +369,41 @@ public class ElasticsearchTools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("delete_document")
-                    .description(
-                            "Delete a document from Elasticsearch. " +
+
+        public String getName() {
+
+            return "delete_document";
+
+        }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "Delete a document from Elasticsearch. " +
                                     "从Elasticsearch删除文档。 " +
                                     "Use this when you need to remove outdated data, clean up documents, or manage storage. "
                                     +
                                     "适用于删除过期数据、清理文档或管理存储等场景。 " +
                                     "Common use cases: data cleanup, storage management, document removal. " +
-                                    "典型用例：数据清理、存储管理、文档删除。")
-                    .inputSchema(schema(
-                            "index", "string", "Index name. Example: 'logs', 'products' | 索引名称。示例: 'logs', 'products'",
-                            "id", "string", "Document ID. Example: 'doc-001' | 文档ID。示例: 'doc-001'"))
-                    .build();
+                                    "典型用例：数据清理、存储管理、文档删除。";
+
         }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) schema(
+                            "index", "string", "Index name. Example: 'logs', 'products' | 索引名称。示例: 'logs', 'products'",
+                            "id", "string", "Document ID. Example: 'doc-001' | 文档ID。示例: 'doc-001'");
+
+        }
+
 
         /**
          * 执行删除操作
@@ -346,15 +419,15 @@ public class ElasticsearchTools {
          * @return 工具执行结果，包含删除的文档 ID 和结果
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             String index = (String) args.get("index");
             String id = (String) args.get("id");
 
             try {
                 DeleteResponse response = client.delete(d -> d.index(index).id(id));
-                return ToolResult.text("Deleted: " + id + "\nResult: " + response.result());
+                return ("Deleted: " + id + "\nResult: " + response.result());
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }

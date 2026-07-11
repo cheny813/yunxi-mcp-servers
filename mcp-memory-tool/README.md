@@ -32,10 +32,9 @@ MCP Memory Tool Server 是基于 MCP (Model Context Protocol) 协议的独立服
 
 ### 系统功能
 
-- 健康检查端点
-- 工具列表查询
-- 工具定义查询
-- 服务器信息查询
+- 基于 MCP 协议（SSE 传输）暴露记忆管理工具
+- 工具发现与调用遵循标准 MCP `tools/list`、`tools/call` 方法
+- v2.0 不再提供独立的健康检查/信息自定义 HTTP 端点
 
 ## 快速开始
 
@@ -64,133 +63,6 @@ java -jar target/mcp-memory-tool-1.0.0.jar
 
 ## API 端点
 
-### 健康检查
-```
-GET /mcp/health
-```
-
-响应：
-```json
-{
-  "status": "UP",
-  "service": "MCP Memory Tool Server"
-}
-```
-
-### 服务器信息
-```
-GET /mcp/info
-```
-
-响应：
-```json
-{
-  "name": "MCP Memory Tool Server",
-  "version": "1.0.0",
-  "description": "Memory management tools for MEMORY.md and USER.md",
-  "tools": ["memory_add", "memory_replace", "memory_remove", "memory_get"],
-  "endpoints": {
-    "http": {
-      "url": "/mcp",
-      "method": "POST",
-      "contentType": "application/json"
-    },
-    "sse": {
-      "connectUrl": "/mcp/sse",
-      "messageUrl": "/mcp/message",
-      "method": "POST",
-      "contentType": "application/json"
-    }
-  }
-}
-```
-
-### 工具列表
-```
-GET /mcp/tools
-```
-
-响应（MCP 协议格式）：
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "result": {
-    "tools": [
-      {
-        "name": "memory_add",
-        "description": "添加新的记忆条目（支持多用户隔离，可选文件或Milvus存储）",
-        "inputSchema": {
-          "type": "object",
-          "properties": {
-            "userId": {
-              "type": "string",
-              "description": "用户ID（必填，用于多用户隔离）"
-            },
-            "target": {
-              "type": "string",
-              "description": "目标存储：'memory' 或 'user'",
-              "enum": ["memory", "user"]
-            },
-            "category": {
-              "type": "string",
-              "description": "记忆分类（如：preference, fact, instruction, experience）"
-            },
-            "content": {
-              "type": "string",
-              "description": "记忆内容"
-            }
-          },
-          "required": ["userId", "target", "category", "content"]
-        }
-      },
-      ...
-    ]
-  }
-}
-```
-
-### HTTP 模式调用工具
-```
-POST /mcp
-Content-Type: application/json
-```
-
-请求体（MCP 协议格式）：
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "memory_add",
-    "arguments": {
-      "userId": "user-123",
-      "target": "memory",
-      "category": "preference",
-      "content": "我喜欢使用 Python 进行数据分析"
-    }
-  }
-}
-```
-
-响应：
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "result": {
-    "content": [
-      {
-        "type": "text",
-        "text": "记忆已成功添加\n- 用户ID: user-123\n- 条目ID: 2024-01-15T10:30:00\n- 目标: memory\n- 分类: preference\n\n使用情况:\n- MEMORY.md: 120/2200 (5.0%)\n- USER.md: 45/1375 (3.0%)\n"
-      }
-    ],
-    "isError": false
-  }
-}
-```
-
 ### SSE 模式连接
 ```
 GET /mcp/sse
@@ -205,87 +77,6 @@ Content-Type: application/json
 ```
 
 请求体和响应格式与 HTTP 模式相同。
-
-## API 端点
-
-### 健康检查
-```
-GET /mcp/memory/health
-```
-
-响应：
-```json
-{
-  "status": "UP",
-  "service": "MCP MemoryToolServer",
-  "tools": 4,
-  "timestamp": 1640995200000
-}
-```
-
-### 工具列表
-```
-GET /mcp/memory/tools
-```
-
-响应：
-```json
-{
-  "success": true,
-  "message": "获取工具列表成功",
-  "data": [
-    {
-      "name": "memory_add",
-      "description": "添加新的记忆条目到 MEMORY.md 或 USER.md",
-      "parameters": {...}
-    },
-    ...
-  ]
-}
-```
-
-### 调用工具
-```
-POST /mcp/memory/invoke
-Content-Type: application/json
-```
-
-请求体：
-```json
-{
-  "toolName": "memory_add",
-  "arguments": {
-    "userId": "user-123",
-    "target": "memory",
-    "category": "preference",
-    "content": "我喜欢使用 Python 进行数据分析"
-  }
-}
-```
-
-响应：
-```json
-{
-  "success": true,
-  "message": "记忆已成功添加",
-  "data": {
-    "entryId": "2024-01-15T10:30:00",
-    "target": "memory",
-    "usage": {
-      "memory": {
-        "current": 120,
-        "limit": 2200,
-        "percentage": 5
-      },
-      "user": {
-        "current": 45,
-        "limit": 1375,
-        "percentage": 3
-      }
-    }
-  }
-}
-```
 
 ## 配置说明
 
@@ -606,7 +397,7 @@ WORKDIR /app
 
 COPY target/mcp-memory-tool-1.0.0.jar app.jar
 
-EXPOSE  80304
+EXPOSE  40304
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
 ```
@@ -622,7 +413,7 @@ services:
     ports:
       - "40304:40304"
     environment:
-      - MCP_PORT= 80304
+      - MCP_PORT=40304
       - LOG_LEVEL=INFO
       - MEMORY_STORAGE_PATH=./data/memory
     volumes:
@@ -647,7 +438,7 @@ docker-compose up -d
 - `self_improving_mcp_tool_failure_total`
 - `self_improving_mcp_tool_execution_duration_seconds`
 
-访问：`http://localhost: 80304/actuator/prometheus`
+访问：`http://localhost:40304/actuator/prometheus`
 
 ### 日志输出
 
@@ -697,7 +488,7 @@ java -jar target/mcp-memory-tool-1.0.0.jar
 ## 版本信息
 
 - **当前版本**: 1.0.0
-- **MCP 协议版本**: 1.0
+- **MCP 协议版本**: 2024-11-05（MCP SDK 0.17.0 / 框架 v2.0）
 - **兼容性**: yunxi-agent-platform v2.0.0+
 
 ## 相关资源
@@ -708,7 +499,7 @@ java -jar target/mcp-memory-tool-1.0.0.jar
 
 ## 许可证
 
-[添加许可证信息]
+本项目采用根目录 [LICENSE](../LICENSE) 中的开源许可证（Apache 2.0）。
 
 ## 贡献指南
 

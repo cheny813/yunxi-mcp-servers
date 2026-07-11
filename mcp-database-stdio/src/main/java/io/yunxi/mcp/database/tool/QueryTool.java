@@ -2,8 +2,6 @@ package io.yunxi.mcp.database.tool;
 
 import io.yunxi.mcp.database.DatabaseMcpServer;
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 
 import java.sql.*;
 import java.util.*;
@@ -23,41 +21,46 @@ public class QueryTool implements ToolHandler {
     }
 
     @Override
-    public ToolDefinition getDefinition() {
-        return ToolDefinition.builder()
-                .name("query")
-                .description("Execute a SQL query and return results. Use for SELECT queries.")
-                .inputSchema(Map.of(
-                        "type", "object",
-                        "properties", Map.of(
-                                "sql", Map.of(
-                                        "type", "string",
-                                        "description", "SQL query to execute (SELECT statements only)"
-                                ),
-                                "limit", Map.of(
-                                        "type", "integer",
-                                        "description", "Maximum number of rows to return (default: 100)",
-                                        "default", 100
-                                )
-                        ),
-                        "required", List.of("sql")
-                ))
-                .build();
+    public String getName() {
+        return "query";
     }
 
     @Override
-    public ToolResult execute(Map<String, Object> arguments) {
+    public String getDescription() {
+        return "Execute a SQL query and return results. Use for SELECT queries.";
+    }
+
+    @Override
+    public Map<String, Object> getInputSchema() {
+        return Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "sql", Map.of(
+                                "type", "string",
+                                "description", "SQL query to execute (SELECT statements only)"
+                        ),
+                        "limit", Map.of(
+                                "type", "integer",
+                                "description", "Maximum number of rows to return (default: 100)",
+                                "default", 100
+                        )
+                ),
+                "required", List.of("sql"));
+    }
+
+    @Override
+    public String execute(Map<String, Object> arguments) {
         String sql = (String) arguments.get("sql");
         int limit = arguments.containsKey("limit") ? ((Number) arguments.get("limit")).intValue() : 100;
 
         if (sql == null || sql.isBlank()) {
-            return ToolResult.error("SQL query is required");
+            throw new RuntimeException("SQL query is required");
         }
 
         // 安全检查：只允许 SELECT 语句
         String trimmedSql = sql.trim().toUpperCase();
         if (!trimmedSql.startsWith("SELECT") && !trimmedSql.startsWith("SHOW") && !trimmedSql.startsWith("DESCRIBE") && !trimmedSql.startsWith("EXPLAIN")) {
-            return ToolResult.error("Only SELECT, SHOW, DESCRIBE, EXPLAIN queries are allowed");
+            throw new RuntimeException("Only SELECT, SHOW, DESCRIBE, EXPLAIN queries are allowed");
         }
 
         try (Connection conn = server.getConnection();
@@ -85,9 +88,9 @@ public class QueryTool implements ToolHandler {
             result.put("columns", getColumnNames(metaData));
             result.put("rows", rows);
 
-            return ToolResult.text(formatResult(result));
+            return formatResult(result);
         } catch (SQLException e) {
-            return ToolResult.error("SQL Error: " + e.getMessage());
+            throw new RuntimeException("SQL Error: " + e.getMessage());
         }
     }
 

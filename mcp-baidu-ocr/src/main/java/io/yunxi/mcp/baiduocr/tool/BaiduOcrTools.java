@@ -4,8 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.yunxi.mcp.baiduocr.BaiduOcrConfig;
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -141,27 +139,57 @@ public class BaiduOcrTools {
         }
 
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("baidu_ocr_general")
-                    .description(
-                            "通用文字识别 (General OCR) - 识别图片中的文字内容。" +
-                                    "Supports Chinese, English, numbers, and symbols. " +
-                                    "典型用例：截图识别、文档扫描、名片识别、票据识别。")
-                    .inputSchema(BaiduOcrTools.schema(
-                            "image", "string", "Base64 encoded image data or image URL. 图片的 Base64 编码或图片URL。支持 JPEG PNG BMP 格式。",
-                            "language_type", "auto_detect", "Language: CHN_ENG(中英文), ENG(英文), JPN(日语), KOR(韩语). 语言类型，默认为CHN_ENG。")
-                    )
-                    .build();
+
+
+        public String getName() {
+
+
+            return "baidu_ocr_general";
+
+
         }
 
+
+
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+
+
+        public String getDescription() {
+
+
+            return "通用文字识别 (General OCR) - 识别图片中的文字内容。" +
+                                    "Supports Chinese, English, numbers, and symbols. " +
+                                    "典型用例：截图识别、文档扫描、名片识别、票据识别。";
+
+
+        }
+
+
+
+        @Override
+
+
+        @SuppressWarnings("unchecked")
+
+
+        public Map<String, Object> getInputSchema() {
+
+
+            return (Map<String, Object>) (Map) BaiduOcrTools.schema(
+                            "image", "string", "Base64 encoded image data or image URL. 图片的 Base64 编码或图片URL。支持 JPEG PNG BMP 格式。",
+                            "language_type", "auto_detect", "Language: CHN_ENG(中英文), ENG(英文), JPN(日语), KOR(韩语). 语言类型，默认为CHN_ENG。");
+
+
+        }
+
+
+        @Override
+        public String execute(Map<String, Object> args) {
             String image = (String) args.get("image");
             String languageType = (String) args.getOrDefault("language_type", "CHN_ENG");
 
             if (image == null || image.isBlank()) {
-                return ToolResult.error("Error: image is required (Base64 or URL)");
+                throw new RuntimeException("Error: image is required (Base64 or URL)");
             }
 
             // 判断是 URL 还是 Base64
@@ -184,27 +212,57 @@ public class BaiduOcrTools {
         }
 
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("baidu_ocr_accurate")
-                    .description(
-                            "高精度文字识别 (Accurate OCR) - 更准确的文字识别，但速度较慢。" +
-                                    "Higher accuracy but slower. 适用于对识别准确率要求较高的场景。 " +
-                                    "典型用例：合同扫描、证照识别、重要文档数字化。")
-                    .inputSchema(BaiduOcrTools.schema(
-                            "image", "string", "Base64 encoded image data or image URL. 图片的 Base64 编码或图片URL。",
-                            "language_type", "auto_detect", "Language: CHN_ENG(中英文), ENG(英文). 语言类型。")
-                    )
-                    .build();
+
+
+        public String getName() {
+
+
+            return "baidu_ocr_accurate";
+
+
         }
 
+
+
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+
+
+        public String getDescription() {
+
+
+            return "高精度文字识别 (Accurate OCR) - 更准确的文字识别，但速度较慢。" +
+                                    "Higher accuracy but slower. 适用于对识别准确率要求较高的场景。 " +
+                                    "典型用例：合同扫描、证照识别、重要文档数字化。";
+
+
+        }
+
+
+
+        @Override
+
+
+        @SuppressWarnings("unchecked")
+
+
+        public Map<String, Object> getInputSchema() {
+
+
+            return (Map<String, Object>) (Map) BaiduOcrTools.schema(
+                            "image", "string", "Base64 encoded image data or image URL. 图片的 Base64 编码或图片URL。",
+                            "language_type", "auto_detect", "Language: CHN_ENG(中英文), ENG(英文). 语言类型。");
+
+
+        }
+
+
+        @Override
+        public String execute(Map<String, Object> args) {
             String image = (String) args.get("image");
             String languageType = (String) args.getOrDefault("language_type", "CHN_ENG");
 
             if (image == null || image.isBlank()) {
-                return ToolResult.error("Error: image is required (Base64 or URL)");
+                throw new RuntimeException("Error: image is required (Base64 or URL)");
             }
 
             boolean isUrl = image.startsWith("http://") || image.startsWith("https://");
@@ -217,11 +275,11 @@ public class BaiduOcrTools {
     /**
      * 执行 OCR 识别
      */
-    private ToolResult doOcr(String apiType, String imageParam, boolean isUrl, String languageType) {
+    private String doOcr(String apiType, String imageParam, boolean isUrl, String languageType) {
         try {
             String token = getAccessToken();
             if (token == null) {
-                return ToolResult.error("Error: Failed to get access token");
+                throw new RuntimeException("Error: Failed to get access token");
             }
 
             String url = config.getEndpoint() + "?access_token=" + token;
@@ -250,7 +308,7 @@ public class BaiduOcrTools {
 
             if (response.statusCode() != 200) {
                 log.error("OCR API error: status={}, body={}", response.statusCode(), response.body());
-                return ToolResult.error("Error: API request failed with status " + response.statusCode());
+                throw new RuntimeException("Error: API request failed with status " + response.statusCode());
             }
 
             JsonNode root = objectMapper.readTree(response.body());
@@ -258,13 +316,13 @@ public class BaiduOcrTools {
             // 检查错误
             if (root.has("error_code")) {
                 String errorMsg = root.has("error_msg") ? root.get("error_msg").asText() : "Unknown error";
-                return ToolResult.error("Error: " + errorMsg);
+                throw new RuntimeException("Error: " + errorMsg);
             }
 
             // 解析结果
             JsonNode wordsResult = root.get("words_result");
             if (wordsResult == null || wordsResult.isEmpty()) {
-                return ToolResult.text("No text found in the image.");
+                return ("No text found in the image.");
             }
 
             StringBuilder sb = new StringBuilder();
@@ -285,11 +343,11 @@ public class BaiduOcrTools {
                 }
             }
 
-            return ToolResult.text(sb.toString());
+            return (sb.toString());
 
         } catch (Exception e) {
             log.error("OCR error: {}", e.getMessage(), e);
-            return ToolResult.error("Error: " + e.getMessage());
+            throw new RuntimeException("Error: " + e.getMessage());
         }
     }
 

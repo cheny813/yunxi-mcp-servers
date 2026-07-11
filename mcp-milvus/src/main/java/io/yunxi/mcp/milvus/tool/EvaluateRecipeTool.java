@@ -1,8 +1,8 @@
 package io.yunxi.mcp.milvus.tool;
 
+import org.springframework.stereotype.Component;
+
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import io.yunxi.mcp.milvus.config.MilvusClientHolder;
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,6 +25,7 @@ import java.util.*;
  * </p>
  */
 @Slf4j
+@Component
 public class EvaluateRecipeTool implements ToolHandler {
 
     private final MilvusClientHolder clientHolder;
@@ -79,65 +80,59 @@ public class EvaluateRecipeTool implements ToolHandler {
     }
 
     @Override
-    public ToolDefinition getDefinition() {
-        return ToolDefinition.builder()
-                .name("evaluate_recipe")
-                .description(
-                        "【重要】对食谱进行营养评分。支持按学校类型、餐费标准灵活评分。" +
-                                "\n\n【评分模式说明】" +
-                                "\n- 优质城市学校：放宽10%，目标95+分（易获高分，体现优势）" +
-                                "\n- 普通城市学校：放宽20%，目标90+分（合理预期）" +
-                                "\n- 农村学校：放宽35%，目标80+分（经济条件限制）" +
-                                "\n- 餐费越低，评分越宽松（考虑经济条件）" +
-                                "\n\n【参数说明】" +
-                                "\n- crowdType: 人群类型" +
-                                "\n- calorie/protein/fat/carbs: 食谱总营养值" +
-                                "\n- mealTypes: 已配置餐次列表" +
-                                "\n- dayCount: 配置天数" +
-                                "\n- schoolType: 学校类型（优质城市/普通城市/农村）" +
-                                "\n- mealPrice: 每餐人均费用（元），可选")
-                .inputSchema(Map.of(
-                        "type", "object",
-                        "properties", Map.of(
-                                "crowdType", Map.of(
-                                        "type", "string",
-                                        "description", "人群类型：学龄前、小学低年级、小学高年级、初中生、高中生、教师"),
-                                "calorie", Map.of(
-                                        "type", "number",
-                                        "description", "食谱总热量(kcal)"),
-                                "protein", Map.of(
-                                        "type", "number",
-                                        "description", "食谱总蛋白质(g)"),
-                                "fat", Map.of(
-                                        "type", "number",
-                                        "description", "食谱总脂肪(g)"),
-                                "carbs", Map.of(
-                                        "type", "number",
-                                        "description", "食谱总碳水化合物(g)"),
-                                "dishCount", Map.of(
-                                        "type", "integer",
-                                        "description", "菜品数量（用于多样性评分）"),
-                                "mealTypes", Map.of(
-                                        "type", "array",
-                                        "description", "已配置餐次列表，如[\"早餐\",\"午餐\"]。用于计算实际推荐量占比",
-                                        "items", Map.of("type", "string")),
-                                "dayCount", Map.of(
-                                        "type", "integer",
-                                        "description", "配置的天数。标准周5天，补课周7天，部分放假按实际天数。默认1天",
-                                        "default", 1),
-                                "schoolType", Map.of(
-                                        "type", "string",
-                                        "description", "学校类型：优质城市（放宽10%，目标95+）、普通城市（放宽20%，目标90+）、农村（放宽35%，目标80+）。默认普通城市",
-                                        "enum", List.of("优质城市", "普通城市", "农村")),
-                                "mealPrice", Map.of(
-                                        "type", "number",
-                                        "description", "每餐人均费用（元）。餐费越低，评分越宽松：<5元放宽20%、5-8元放宽10%、8-12元放宽5%、>12元标准评分")),
-                        "required", List.of("crowdType", "calorie", "protein", "fat", "carbs")))
-                .build();
+    public String getName() {
+        return "evaluate_recipe";
     }
 
     @Override
-    public ToolResult execute(Map<String, Object> arguments) {
+    public String getDescription() {
+        return "【重要】对食谱进行营养评分。支持按学校类型、餐费标准灵活评分。\n\n【评分模式说明】\n- 优质城市学校：放宽10%，目标95+分（易获高分，体现优势）\n- 普通城市学校：放宽20%，目标90+分（合理预期）\n- 农村学校：放宽35%，目标80+分（经济条件限制）\n- 餐费越低，评分越宽松（考虑经济条件）\n\n【参数说明】\n- crowdType: 人群类型\n- calorie/protein/fat/carbs: 食谱总营养值\n- mealTypes: 已配置餐次列表\n- dayCount: 配置天数\n- schoolType: 学校类型（优质城市/普通城市/农村）\n- mealPrice: 每餐人均费用（元），可选";
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getInputSchema() {
+        return (Map<String, Object>) (Map) Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "crowdType", Map.of(
+                                "type", "string",
+                                "description", "人群类型：学龄前、小学低年级、小学高年级、初中生、高中生、教师"),
+                        "calorie", Map.of(
+                                "type", "number",
+                                "description", "食谱总热量(kcal)"),
+                        "protein", Map.of(
+                                "type", "number",
+                                "description", "食谱总蛋白质(g)"),
+                        "fat", Map.of(
+                                "type", "number",
+                                "description", "食谱总脂肪(g)"),
+                        "carbs", Map.of(
+                                "type", "number",
+                                "description", "食谱总碳水化合物(g)"),
+                        "dishCount", Map.of(
+                                "type", "integer",
+                                "description", "菜品数量（用于多样性评分）"),
+                        "mealTypes", Map.of(
+                                "type", "array",
+                                "description", "已配置餐次列表，如[\"早餐\",\"午餐\"]。用于计算实际推荐量占比",
+                                "items", Map.of("type", "string")),
+                        "dayCount", Map.of(
+                                "type", "integer",
+                                "description", "配置的天数。标准周5天，补课周7天，部分放假按实际天数。默认1天",
+                                "default", 1),
+                        "schoolType", Map.of(
+                                "type", "string",
+                                "description", "学校类型：优质城市（放宽10%，目标95+）、普通城市（放宽20%，目标90+）、农村（放宽35%，目标80+）。默认普通城市",
+                                "enum", List.of("优质城市", "普通城市", "农村")),
+                        "mealPrice", Map.of(
+                                "type", "number",
+                                "description", "每餐人均费用（元）。餐费越低，评分越宽松：<5元放宽20%、5-8元放宽10%、8-12元放宽5%、>12元标准评分")),
+                "required", List.of("crowdType", "calorie", "protein", "fat", "carbs"));
+    }
+
+    @Override
+    public String execute(Map<String, Object> arguments) {
         String crowdType = (String) arguments.get("crowdType");
         double calorie = getNumberArgument(arguments, "calorie", 0);
         double protein = getNumberArgument(arguments, "protein", 0);
@@ -176,7 +171,7 @@ public class EvaluateRecipeTool implements ToolHandler {
         }
 
         if (crowdType == null || crowdType.isBlank()) {
-            return ToolResult.error("crowdType is required");
+            throw new RuntimeException("crowdType is required");
         }
 
         // 计算综合宽松度
@@ -276,11 +271,11 @@ public class EvaluateRecipeTool implements ToolHandler {
 
             log.info("【食谱评分】总分: {}, 等级: {}, 目标: {}, 配置: {}天, 学校类型: {}, 宽松度: {}", 
                     totalScore, getGrade(totalScore), targetScore, dayCount, schoolType, tolerance);
-            return ToolResult.text(formatResult(result));
+            return formatResult(result);
 
         } catch (Exception e) {
             log.error("【食谱评分】评分失败", e);
-            return ToolResult.error("评分失败: " + e.getMessage());
+            throw new RuntimeException("评分失败: " + e.getMessage());
         }
     }
 

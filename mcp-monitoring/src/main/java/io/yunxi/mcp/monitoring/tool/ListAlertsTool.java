@@ -1,8 +1,8 @@
 package io.yunxi.mcp.monitoring.tool;
 
+import org.springframework.stereotype.Component;
+
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import io.yunxi.mcp.monitoring.service.AlertService;
 
 import java.util.List;
@@ -18,6 +18,7 @@ import java.util.Map;
  * @author yunxi-mcp-servers
  * @since 1.0.0
  */
+@Component
 public class ListAlertsTool implements ToolHandler {
 
     private final AlertService alertService;
@@ -27,30 +28,34 @@ public class ListAlertsTool implements ToolHandler {
     }
 
     @Override
-    public ToolDefinition getDefinition() {
-        return ToolDefinition.builder()
-                .name("list_alerts")
-                .description(
-                        "查询告警历史记录。\n" +
-                        "支持按告警级别和指标名称过滤，按时间倒序排列。\n" +
-                        "用于回顾系统异常历史、分析问题趋势。")
-                .inputSchema(Map.of(
-                        "type", "object",
-                        "properties", Map.of(
-                                "level", Map.of(
-                                        "type", "string",
-                                        "description", "告警级别过滤: warning, critical, info"),
-                                "metricName", Map.of(
-                                        "type", "string",
-                                        "description", "按指标名称过滤"),
-                                "limit", Map.of(
-                                        "type", "number",
-                                        "description", "最大返回条数，默认 50"))))
-                .build();
+    public String getName() {
+        return "list_alerts";
     }
 
     @Override
-    public ToolResult execute(Map<String, Object> arguments) {
+    public String getDescription() {
+        return "查询告警历史记录。\n支持按告警级别和指标名称过滤，按时间倒序排列。\n用于回顾系统异常历史、分析问题趋势。";
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getInputSchema() {
+        return (Map<String, Object>) (Map) Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "level", Map.of(
+                                "type", "string",
+                                "description", "告警级别过滤: warning, critical, info"),
+                        "metricName", Map.of(
+                                "type", "string",
+                                "description", "按指标名称过滤"),
+                        "limit", Map.of(
+                                "type", "number",
+                                "description", "最大返回条数，默认 50")));
+    }
+
+    @Override
+    public String execute(Map<String, Object> arguments) {
         String level = (String) arguments.get("level");
         String metricName = (String) arguments.get("metricName");
         int limit = arguments.containsKey("limit")
@@ -61,7 +66,7 @@ public class ListAlertsTool implements ToolHandler {
             List<AlertService.AlertRecord> alerts = alertService.getAlerts(level, metricName, limit);
 
             if (alerts.isEmpty()) {
-                return ToolResult.text("暂无告警记录");
+                return "暂无告警记录";
             }
 
             StringBuilder sb = new StringBuilder();
@@ -77,9 +82,9 @@ public class ListAlertsTool implements ToolHandler {
                         .append(" | 已确认: ").append(alert.isAcknowledged() ? "是" : "否").append("\n\n");
             }
 
-            return ToolResult.text(sb.toString());
+            return sb.toString();
         } catch (Exception e) {
-            return ToolResult.error("查询告警失败: " + e.getMessage());
+            throw new RuntimeException("查询告警失败: " + e.getMessage());
         }
     }
 }

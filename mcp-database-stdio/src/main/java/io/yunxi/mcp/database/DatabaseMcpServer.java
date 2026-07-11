@@ -2,7 +2,7 @@ package io.yunxi.mcp.database;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import io.yunxi.mcp.common.server.AbstractMcpServer;
+import io.yunxi.mcp.common.server.AbstractStdioMcpServer;
 import io.yunxi.mcp.database.tool.QueryTool;
 import io.yunxi.mcp.database.tool.ListTablesTool;
 import io.yunxi.mcp.database.tool.DescribeTableTool;
@@ -22,7 +22,7 @@ import java.sql.SQLException;
  * java -jar mcp-database.jar --db.url=${DATABASE_URL:jdbc:mysql://localhost:3306/test} --db.username=${DATABASE_USERNAME:root} --db.password=${DATABASE_PASSWORD:root}
  * </pre>
  */
-public class DatabaseMcpServer extends AbstractMcpServer {
+public class DatabaseMcpServer extends AbstractStdioMcpServer {
 
     private final DataSource dataSource;
 

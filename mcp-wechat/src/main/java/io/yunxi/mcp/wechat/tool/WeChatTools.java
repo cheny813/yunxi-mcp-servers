@@ -3,8 +3,6 @@ package io.yunxi.mcp.wechat.tool;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import io.yunxi.mcp.wechat.WeChatConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,25 +65,55 @@ public class WeChatTools {
         }
 
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("wechat_send_text")
-                    .description(
-                            "发送企业微信文本消息 - 向企业微信群或成员发送文本消息。" +
-                                    "典型用例：告警通知、任务提醒、部署状态通知。")
-                    .inputSchema(WeChatTools.schema(
-                            "content", "string", "消息内容",
-                            "mentionedList", "array", "被提醒人的userid列表（可选）",
-                            "mentionedMobileList", "array", "被提醒人手机号列表（可选）")
-                    )
-                    .build();
+
+
+        public String getName() {
+
+
+            return "wechat_send_text";
+
+
         }
 
+
+
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+
+
+        public String getDescription() {
+
+
+            return "发送企业微信文本消息 - 向企业微信群或成员发送文本消息。" +
+                                    "典型用例：告警通知、任务提醒、部署状态通知。";
+
+
+        }
+
+
+
+        @Override
+
+
+        @SuppressWarnings("unchecked")
+
+
+        public Map<String, Object> getInputSchema() {
+
+
+            return (Map<String, Object>) (Map) WeChatTools.schema(
+                            "content", "string", "消息内容",
+                            "mentionedList", "array", "被提醒人的userid列表（可选）",
+                            "mentionedMobileList", "array", "被提醒人手机号列表（可选）");
+
+
+        }
+
+
+        @Override
+        public String execute(Map<String, Object> args) {
             String content = (String) args.get("content");
             if (content == null || content.isBlank()) {
-                return ToolResult.error("Error: content is required");
+                throw new RuntimeException("Error: content is required");
             }
             return parent.sendText(content);
         }
@@ -104,30 +132,60 @@ public class WeChatTools {
         }
 
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("wechat_send_markdown")
-                    .description(
-                            "发送企业微信 Markdown 消息 - 发送富格式 Markdown 消息。" +
-                                    "支持标题、列表、链接等格式。" +
-                                    "典型用例：详细告警信息、部署审批、状态面板。")
-                    .inputSchema(WeChatTools.schema(
-                            "title", "string", "消息标题",
-                            "text", "string", "Markdown 格式的消息内容")
-                    )
-                    .build();
+
+
+        public String getName() {
+
+
+            return "wechat_send_markdown";
+
+
         }
 
+
+
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+
+
+        public String getDescription() {
+
+
+            return "发送企业微信 Markdown 消息 - 发送富格式 Markdown 消息。" +
+                                    "支持标题、列表、链接等格式。" +
+                                    "典型用例：详细告警信息、部署审批、状态面板。";
+
+
+        }
+
+
+
+        @Override
+
+
+        @SuppressWarnings("unchecked")
+
+
+        public Map<String, Object> getInputSchema() {
+
+
+            return (Map<String, Object>) (Map) WeChatTools.schema(
+                            "title", "string", "消息标题",
+                            "text", "string", "Markdown 格式的消息内容");
+
+
+        }
+
+
+        @Override
+        public String execute(Map<String, Object> args) {
             String title = (String) args.get("title");
             String text = (String) args.get("text");
 
             if (title == null || title.isBlank()) {
-                return ToolResult.error("Error: title is required");
+                throw new RuntimeException("Error: title is required");
             }
             if (text == null || text.isBlank()) {
-                return ToolResult.error("Error: text is required");
+                throw new RuntimeException("Error: text is required");
             }
 
             return parent.sendMarkdown(title, text);
@@ -139,7 +197,7 @@ public class WeChatTools {
     /**
      * 发送文本消息
      */
-    public ToolResult sendText(String content) {
+    public String sendText(String content) {
         try {
             // 优先使用 Webhook 模式
             if (isWebhookMode()) {
@@ -149,7 +207,7 @@ public class WeChatTools {
             // 应用消息模式
             String token = getAccessToken();
             if (token == null) {
-                return ToolResult.error("Error: 无法获取 access_token，请检查企业微信配置");
+                throw new RuntimeException("Error: 无法获取 access_token，请检查企业微信配置");
             }
 
             Map<String, Object> message = buildAppMessage("text", Map.of("content", content));
@@ -157,14 +215,14 @@ public class WeChatTools {
 
         } catch (Exception e) {
             log.error("Send text error: {}", e.getMessage(), e);
-            return ToolResult.error("Error: " + e.getMessage());
+            throw new RuntimeException("Error: " + e.getMessage());
         }
     }
 
     /**
      * 发送 Markdown 消息
      */
-    public ToolResult sendMarkdown(String title, String text) {
+    public String sendMarkdown(String title, String text) {
         try {
             if (isWebhookMode()) {
                 return sendViaWebhook("markdown", Map.of("content", text));
@@ -172,7 +230,7 @@ public class WeChatTools {
 
             String token = getAccessToken();
             if (token == null) {
-                return ToolResult.error("Error: 无法获取 access_token，请检查企业微信配置");
+                throw new RuntimeException("Error: 无法获取 access_token，请检查企业微信配置");
             }
 
             Map<String, Object> message = buildAppMessage("markdown", Map.of("content", text));
@@ -180,7 +238,7 @@ public class WeChatTools {
 
         } catch (Exception e) {
             log.error("Send markdown error: {}", e.getMessage(), e);
-            return ToolResult.error("Error: " + e.getMessage());
+            throw new RuntimeException("Error: " + e.getMessage());
         }
     }
 
@@ -189,14 +247,14 @@ public class WeChatTools {
     /**
      * 通过群机器人 Webhook 发送消息
      */
-    private ToolResult sendViaWebhook(String msgType, Map<String, Object> content) {
+    private String sendViaWebhook(String msgType, Map<String, Object> content) {
         try {
             String webhook = config.getWebhook();
             if (webhook == null || webhook.isBlank()) {
                 webhook = System.getenv("WECHAT_WEBHOOK");
             }
             if (webhook == null || webhook.isBlank()) {
-                return ToolResult.error("Error: WECHAT_WEBHOOK not configured");
+                throw new RuntimeException("Error: WECHAT_WEBHOOK not configured");
             }
 
             Map<String, Object> requestBody = new HashMap<>();
@@ -218,14 +276,14 @@ public class WeChatTools {
             int errcode = root.has("errcode") ? root.get("errcode").asInt() : -1;
             if (errcode != 0) {
                 String errMsg = root.has("errmsg") ? root.get("errmsg").asText() : "Unknown error";
-                return ToolResult.error("Error: " + errMsg);
+                throw new RuntimeException("Error: " + errMsg);
             }
 
-            return ToolResult.text("✅ 企业微信消息发送成功");
+            return ("✅ 企业微信消息发送成功");
 
         } catch (Exception e) {
             log.error("Webhook send error: {}", e.getMessage(), e);
-            return ToolResult.error("Error: " + e.getMessage());
+            throw new RuntimeException("Error: " + e.getMessage());
         }
     }
 
@@ -300,7 +358,7 @@ public class WeChatTools {
     /**
      * 通过应用消息接口发送
      */
-    private ToolResult sendAppMessage(String token, Map<String, Object> message) {
+    private String sendAppMessage(String token, Map<String, Object> message) {
         try {
             String url = "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=" + token;
             String requestJson = objectMapper.writeValueAsString(message);
@@ -318,14 +376,14 @@ public class WeChatTools {
             int errcode = root.has("errcode") ? root.get("errcode").asInt() : -1;
             if (errcode != 0) {
                 String errMsg = root.has("errmsg") ? root.get("errmsg").asText() : "Unknown error";
-                return ToolResult.error("Error: " + errMsg);
+                throw new RuntimeException("Error: " + errMsg);
             }
 
-            return ToolResult.text("✅ 企业微信消息发送成功");
+            return ("✅ 企业微信消息发送成功");
 
         } catch (Exception e) {
             log.error("App message send error: {}", e.getMessage(), e);
-            return ToolResult.error("Error: " + e.getMessage());
+            throw new RuntimeException("Error: " + e.getMessage());
         }
     }
 

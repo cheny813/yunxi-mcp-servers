@@ -1,18 +1,26 @@
 package io.yunxi.mcp.pptx;
 
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
+import io.yunxi.mcp.common.util.ToolResult;
 import lombok.extern.slf4j.Slf4j;
+import io.yunxi.mcp.common.util.ToolResult;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
+import io.yunxi.mcp.common.util.ToolResult;
 import org.apache.poi.xslf.usermodel.XSLFSlide;
+import io.yunxi.mcp.common.util.ToolResult;
 import org.apache.poi.xslf.usermodel.XSLFTextBox;
+import io.yunxi.mcp.common.util.ToolResult;
 import org.apache.poi.xslf.usermodel.XSLFShape;
+import io.yunxi.mcp.common.util.ToolResult;
 import org.springframework.beans.factory.annotation.Autowired;
+import io.yunxi.mcp.common.util.ToolResult;
 import org.springframework.stereotype.Component;
+import io.yunxi.mcp.common.util.ToolResult;
 
 import java.io.*;
+import io.yunxi.mcp.common.util.ToolResult;
 import java.util.*;
+import io.yunxi.mcp.common.util.ToolResult;
 
 /**
  * PowerPoint 处理工具
@@ -41,34 +49,65 @@ public class PptxTools {
         }
 
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("pptx_operation")
-                    .description(
-                            "Process PowerPoint files: read, info, create, add_slide. " +
+
+
+        public String getName() {
+
+
+            return "pptx_operation";
+
+
+        }
+
+
+
+        @Override
+
+
+        public String getDescription() {
+
+
+            return "Process PowerPoint files: read, info, create, add_slide. " +
                                     "处理 PowerPoint 文件：读取、获取信息、创建、添加幻灯片。 " +
                                     "Use this when you need to read presentation content, create new slides, " +
                                     "or build presentations programmatically. " +
                                     "适用于读取演示文稿内容、创建新幻灯片、程序化构建演示文稿等场景。 " +
                                     "Common use cases: presentation reading, slide creation, report conversion, meeting preparation. " +
-                                    "典型用例：演示文稿阅读、幻灯片创建、报告转换、会议准备。")
-                    .inputSchema(schema(
+                                    "典型用例：演示文稿阅读、幻灯片创建、报告转换、会议准备。";
+
+
+        }
+
+
+
+        @Override
+
+
+        @SuppressWarnings("unchecked")
+
+
+        public Map<String, Object> getInputSchema() {
+
+
+            return (Map<String, Object>) (Map) schema(
                             "action", "string", "Operation: read, info, create, add_slide",
                             "file_path", "string", "PowerPoint file path | PPTX 文件路径",
                             "slide_index", "integer", "Slide index (0-based) | 幻灯片索引",
                             "title", "string", "Slide title | 幻灯片标题",
                             "content", "string", "Slide content | 幻灯片内容",
-                            "output_path", "string", "Output file path | 输出文件路径"))
-                    .build();
+                            "output_path", "string", "Output file path | 输出文件路径");
+
+
         }
 
+
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             String action = (String) args.getOrDefault("action", "info");
             String filePath = (String) args.get("file_path");
 
             if (filePath == null || filePath.isBlank()) {
-                return ToolResult.error("Error: file_path is required");
+                throw new RuntimeException("Error: file_path is required");
             }
 
             try {
@@ -81,7 +120,7 @@ public class PptxTools {
                 };
             } catch (Exception e) {
                 log.error("PowerPoint operation error: {}", e.getMessage(), e);
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }
@@ -89,15 +128,15 @@ public class PptxTools {
     /**
      * 获取 PowerPoint 信息
      */
-    public ToolResult getPptxInfo(String filePath) {
+    public String getPptxInfo(String filePath) {
         try (XMLSlideShow ppt = new XMLSlideShow(new FileInputStream(filePath))) {
             Map<String, Object> info = new HashMap<>();
             info.put("file", filePath);
             info.put("slide_count", ppt.getSlides().size());
 
-            return ToolResult.text(formatPptxInfo(info));
+            return (formatPptxInfo(info));
         } catch (IOException e) {
-            return ToolResult.error("Error: Cannot read PowerPoint file - " + e.getMessage());
+            throw new RuntimeException("Error: Cannot read PowerPoint file - " + e.getMessage());
         }
     }
 
@@ -113,7 +152,7 @@ public class PptxTools {
     /**
      * 读取 PowerPoint 幻灯片
      */
-    public ToolResult readPptx(Map<String, Object> args) {
+    public String readPptx(Map<String, Object> args) {
         String filePath = (String) args.get("file_path");
         Integer slideIndex = args.get("slide_index") != null ? ((Number) args.get("slide_index")).intValue() : null;
 
@@ -122,9 +161,9 @@ public class PptxTools {
 
             if (slideIndex != null) {
                 if (slideIndex < 0 || slideIndex >= slides.size()) {
-                    return ToolResult.error("Error: Slide index out of range");
+                    throw new RuntimeException("Error: Slide index out of range");
                 }
-                return ToolResult.text(readSlideContent(slides.get(slideIndex), slideIndex));
+                return (readSlideContent(slides.get(slideIndex), slideIndex));
             }
 
             // 读取所有幻灯片
@@ -136,9 +175,9 @@ public class PptxTools {
                 sb.append("\n");
             }
 
-            return ToolResult.text(sb.toString());
+            return (sb.toString());
         } catch (IOException e) {
-            return ToolResult.error("Error: Cannot read PowerPoint - " + e.getMessage());
+            throw new RuntimeException("Error: Cannot read PowerPoint - " + e.getMessage());
         }
     }
 
@@ -163,11 +202,11 @@ public class PptxTools {
     /**
      * 创建新 PowerPoint
      */
-    public ToolResult createPptx(Map<String, Object> args) {
+    public String createPptx(Map<String, Object> args) {
         String outputPath = (String) args.getOrDefault("output_path", (String) args.get("file_path"));
 
         if (outputPath == null || outputPath.isBlank()) {
-            return ToolResult.error("Error: output_path or file_path is required");
+            throw new RuntimeException("Error: output_path or file_path is required");
         }
 
         try (XMLSlideShow ppt = new XMLSlideShow()) {
@@ -175,23 +214,23 @@ public class PptxTools {
             XSLFSlide slide = ppt.createSlide();
 
             ppt.write(new FileOutputStream(outputPath));
-            return ToolResult.text(String.format("✅ PowerPoint file created: %s", outputPath));
+            return (String.format("✅ PowerPoint file created: %s", outputPath));
         } catch (IOException e) {
-            return ToolResult.error("Error: Cannot create PowerPoint - " + e.getMessage());
+            throw new RuntimeException("Error: Cannot create PowerPoint - " + e.getMessage());
         }
     }
 
     /**
      * 添加幻灯片
      */
-    public ToolResult addSlide(Map<String, Object> args) {
+    public String addSlide(Map<String, Object> args) {
         String filePath = (String) args.get("file_path");
         String title = (String) args.get("title");
         String content = (String) args.get("content");
         String outputPath = (String) args.getOrDefault("output_path", filePath);
 
         if (filePath == null || filePath.isBlank()) {
-            return ToolResult.error("Error: file_path is required");
+            throw new RuntimeException("Error: file_path is required");
         }
 
         try (XMLSlideShow ppt = new XMLSlideShow(new FileInputStream(filePath))) {
@@ -211,9 +250,9 @@ public class PptxTools {
             }
 
             ppt.write(new FileOutputStream(outputPath));
-            return ToolResult.text(String.format("✅ Slide added to: %s", outputPath));
+            return (String.format("✅ Slide added to: %s", outputPath));
         } catch (IOException e) {
-            return ToolResult.error("Error: Cannot add slide - " + e.getMessage());
+            throw new RuntimeException("Error: Cannot add slide - " + e.getMessage());
         }
     }
 

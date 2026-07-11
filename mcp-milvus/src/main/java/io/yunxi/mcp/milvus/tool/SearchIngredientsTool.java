@@ -1,8 +1,8 @@
 package io.yunxi.mcp.milvus.tool;
 
+import org.springframework.stereotype.Component;
+
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import io.yunxi.mcp.milvus.config.MilvusClientHolder;
 import lombok.extern.slf4j.Slf4j;
 
@@ -15,6 +15,7 @@ import java.util.*;
  * </p>
  */
 @Slf4j
+@Component
 public class SearchIngredientsTool implements ToolHandler {
 
     private final MilvusClientHolder clientHolder;
@@ -24,38 +25,41 @@ public class SearchIngredientsTool implements ToolHandler {
     }
 
     @Override
-    public ToolDefinition getDefinition() {
-        return ToolDefinition.builder()
-                .name("search_ingredients")
-                .description(
-                        "【重要】搜索食材库中的食材。" +
-                                "当需要查询食材信息、获取食材ID（ingredientId）时使用。" +
-                                "参数：query(搜索关键词，如'鸭肉'、'白菜'), schoolId(学校ID), topK(返回数量，默认20)。" +
-                                "返回结果包含：id(ingredientId), name, category(分类), nutrients(营养成分)。")
-                .inputSchema(Map.of(
-                        "type", "object",
-                        "properties", Map.of(
-                                "query", Map.of(
-                                        "type", "string",
-                                        "description", "搜索关键词，如'鸭肉'、'白菜'、'胡萝卜'"),
-                                "schoolId", Map.of(
-                                        "type", "integer",
-                                        "description", "学校ID（可选，用于筛选学校专属食材）"),
-                                "topK", Map.of(
-                                        "type", "integer",
-                                        "description", "返回数量，默认20",
-                                        "default", 20)),
-                        "required", List.of("query")))
-                .build();
+    public String getName() {
+        return "search_ingredients";
     }
 
     @Override
-    public ToolResult execute(Map<String, Object> arguments) {
+    public String getDescription() {
+        return "【重要】搜索食材库中的食材。当需要查询食材信息、获取食材ID（ingredientId）时使用。参数：query(搜索关键词，如'鸭肉'、'白菜'), schoolId(学校ID), topK(返回数量，默认20)。返回结果包含：id(ingredientId), name, category(分类), nutrients(营养成分)。";
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getInputSchema() {
+        return (Map<String, Object>) (Map) Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "query", Map.of(
+                                "type", "string",
+                                "description", "搜索关键词，如'鸭肉'、'白菜'、'胡萝卜'"),
+                        "schoolId", Map.of(
+                                "type", "integer",
+                                "description", "学校ID（可选，用于筛选学校专属食材）"),
+                        "topK", Map.of(
+                                "type", "integer",
+                                "description", "返回数量，默认20",
+                                "default", 20)),
+                "required", List.of("query"));
+    }
+
+    @Override
+    public String execute(Map<String, Object> arguments) {
         String query = (String) arguments.get("query");
         Integer topK = getIntArgument(arguments, "topK", 20);
 
         if (query == null || query.isBlank()) {
-            return ToolResult.error("query is required");
+            throw new RuntimeException("query is required");
         }
 
         log.info("【食材搜索】query={}, topK={}", query, topK);
@@ -66,11 +70,11 @@ public class SearchIngredientsTool implements ToolHandler {
             result.put("message", "食材搜索功能需 embedding 服务，当前返回提示");
             result.put("query", query);
 
-            return ToolResult.text(formatResult(result, query));
+            return formatResult(result, query);
 
         } catch (Exception e) {
             log.error("【食材搜索】失败: query={}", query, e);
-            return ToolResult.error("搜索失败: " + e.getMessage());
+            throw new RuntimeException("搜索失败: " + e.getMessage());
         }
     }
 

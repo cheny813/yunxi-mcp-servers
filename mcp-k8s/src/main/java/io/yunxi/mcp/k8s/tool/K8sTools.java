@@ -4,9 +4,6 @@ import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.*;
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -70,13 +67,33 @@ public class K8sTools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("list_pods")
-                    .description("List pods in a namespace")
-                    .inputSchema(schema("namespace", "string", "Namespace (default: default)"))
-                    .build();
+
+        public String getName() {
+
+            return "list_pods";
+
         }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "List pods in a namespace";
+
+        }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) schema("namespace", "string", "Namespace (default: default)");
+
+        }
+
 
         /**
          * 执行获取 Pod 列表操作
@@ -85,7 +102,7 @@ public class K8sTools {
          * @return 工具执行结果，包含 Pod 列表
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             String namespace = (String) args.getOrDefault("namespace", "default");
             try {
                 V1PodList podList = api.listNamespacedPod(namespace).execute();
@@ -97,9 +114,9 @@ public class K8sTools {
                     sb.append("  Status: ").append(pod.getStatus().getPhase()).append("\n");
                     sb.append("  Node: ").append(pod.getSpec().getNodeName()).append("\n\n");
                 }
-                return ToolResult.text(sb.toString());
+                return (sb.toString());
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }
@@ -134,13 +151,33 @@ public class K8sTools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("list_services")
-                    .description("List services in a namespace")
-                    .inputSchema(schema("namespace", "string", "Namespace (default: default)"))
-                    .build();
+
+        public String getName() {
+
+            return "list_services";
+
         }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "List services in a namespace";
+
+        }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) schema("namespace", "string", "Namespace (default: default)");
+
+        }
+
 
         /**
          * 执行获取服务列表操作
@@ -149,7 +186,7 @@ public class K8sTools {
          * @return 工具执行结果，包含服务列表
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             String namespace = (String) args.getOrDefault("namespace", "default");
             try {
                 V1ServiceList svcList = api.listNamespacedService(namespace).execute();
@@ -162,9 +199,9 @@ public class K8sTools {
                     sb.append("  Type: ").append(svc.getSpec().getType()).append("\n");
                     sb.append("  Cluster IP: ").append(svc.getSpec().getClusterIP()).append("\n\n");
                 }
-                return ToolResult.text(sb.toString());
+                return (sb.toString());
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }
@@ -199,13 +236,33 @@ public class K8sTools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("list_namespaces")
-                    .description("List all namespaces")
-                    .inputSchema(emptySchema())
-                    .build();
+
+        public String getName() {
+
+            return "list_namespaces";
+
         }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "List all namespaces";
+
+        }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) emptySchema();
+
+        }
+
 
         /**
          * 执行获取命名空间列表操作
@@ -214,7 +271,7 @@ public class K8sTools {
          * @return 工具执行结果，包含命名空间列表
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             try {
                 V1NamespaceList nsList = api.listNamespace().execute();
                 StringBuilder sb = new StringBuilder();
@@ -223,9 +280,9 @@ public class K8sTools {
                 for (V1Namespace ns : nsList.getItems()) {
                     sb.append("- ").append(ns.getMetadata().getName()).append("\n");
                 }
-                return ToolResult.text(sb.toString());
+                return (sb.toString());
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
     }

@@ -1,12 +1,12 @@
 package io.yunxi.mcp.milvus.tool;
 
+import org.springframework.stereotype.Component;
+
 import io.milvus.v2.client.MilvusClientV2;
 import io.milvus.v2.service.vector.request.data.FloatVec;
 import io.milvus.v2.service.vector.request.SearchReq;
 import io.milvus.v2.service.vector.response.SearchResp;
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import io.yunxi.mcp.milvus.config.MilvusClientHolder;
 import io.yunxi.mcp.milvus.embedding.EmbeddingService;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +24,7 @@ import java.util.*;
  * </p>
  */
 @Slf4j
+@Component
 public class SearchDishesTool implements ToolHandler {
 
     private final MilvusClientHolder clientHolder;
@@ -38,40 +39,42 @@ public class SearchDishesTool implements ToolHandler {
     }
 
     @Override
-    public ToolDefinition getDefinition() {
-        return ToolDefinition.builder()
-                .name("search_dishes")
-                .description(
-                        "【关键工具】通过向量搜索查询菜品。" +
-                                "当用户要求生成食谱、配餐、推荐菜品时，必须首先调用此工具获取 dishId。" +
-                                "搜索策略：先搜索学校专属菜品库，若无结果或无schoolId则搜索公共菜品库。" +
-                                "参数：schoolId(学校ID，可选), query(搜索关键词), topK(返回数量，默认20)。" +
-                                "返回结果包含：id(dishId), name, type, ingredients, ingredientIds, nutrients, isCommon(是否公共菜品)。")
-                .inputSchema(Map.of(
-                        "type", "object",
-                        "properties", Map.of(
-                                "schoolId", Map.of(
-                                        "type", "integer",
-                                        "description", "学校ID（可选）。如有则优先搜索学校专属菜品，否则搜索公共菜品库"),
-                                "query", Map.of(
-                                        "type", "string",
-                                        "description", "搜索关键词，如'鸭'、'肉'、'蔬菜'、'紫苏焖鸭'"),
-                                "topK", Map.of(
-                                        "type", "integer",
-                                        "description", "返回数量，默认20",
-                                        "default", 20)),
-                        "required", Arrays.asList("query")))
-                .build();
+    public String getName() {
+        return "search_dishes";
     }
 
     @Override
-    public ToolResult execute(Map<String, Object> arguments) {
+    public String getDescription() {
+        return "【关键工具】通过向量搜索查询菜品。当用户要求生成食谱、配餐、推荐菜品时，必须首先调用此工具获取 dishId。搜索策略：先搜索学校专属菜品库，若无结果或无schoolId则搜索公共菜品库。参数：schoolId(学校ID，可选), query(搜索关键词), topK(返回数量，默认20)。返回结果包含：id(dishId), name, type, ingredients, ingredientIds, nutrients, isCommon(是否公共菜品)。";
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getInputSchema() {
+        return (Map<String, Object>) (Map) Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "schoolId", Map.of(
+                                "type", "integer",
+                                "description", "学校ID（可选）。如有则优先搜索学校专属菜品，否则搜索公共菜品库"),
+                        "query", Map.of(
+                                "type", "string",
+                                "description", "搜索关键词，如'鸭'、'肉'、'蔬菜'、'紫苏焖鸭'"),
+                        "topK", Map.of(
+                                "type", "integer",
+                                "description", "返回数量，默认20",
+                                "default", 20)),
+                "required", List.of("query"));
+    }
+
+    @Override
+    public String execute(Map<String, Object> arguments) {
         Long schoolId = getLongArgument(arguments, "schoolId");
         String query = (String) arguments.get("query");
         Integer topK = getIntArgument(arguments, "topK", 20);
 
         if (query == null || query.isBlank()) {
-            return ToolResult.error("query is required");
+            throw new RuntimeException("query is required");
         }
 
         log.info("【向量搜索】schoolId={}, query={}, topK={}", schoolId, query, topK);
@@ -79,7 +82,7 @@ public class SearchDishesTool implements ToolHandler {
         MilvusClientV2 milvusClient = clientHolder.getClient();
         if (milvusClient == null) {
             log.warn("【向量搜索】Milvus 客户端不可用，请稍后重试");
-            return ToolResult.error("Milvus 服务暂不可用，正在尝试重连，请稍后重试");
+            throw new RuntimeException("Milvus 服务暂不可用，正在尝试重连，请稍后重试");
         }
 
         try {
@@ -87,7 +90,7 @@ public class SearchDishesTool implements ToolHandler {
             List<Float> queryVector = embeddingService.embed(query);
             if (queryVector == null || queryVector.isEmpty()) {
                 log.error("生成查询向量失败");
-                return ToolResult.error("生成查询向量失败，请检查 Embedding 服务配置");
+                throw new RuntimeException("生成查询向量失败，请检查 Embedding 服务配置");
             }
 
             List<Map<String, Object>> dishes = new ArrayList<>();
@@ -118,11 +121,11 @@ public class SearchDishesTool implements ToolHandler {
 
             log.info("【向量搜索】搜索完成，找到 {} 条菜品（来源：{}）", 
                     dishes.size(), fromCommon ? "公共菜品库" : "学校专属菜品库");
-            return ToolResult.text(formatResult(result));
+            return formatResult(result);
 
         } catch (Exception e) {
             log.error("【向量搜索】搜索失败: schoolId={}, query={}", schoolId, query, e);
-            return ToolResult.error("搜索失败: " + e.getMessage());
+            throw new RuntimeException("搜索失败: " + e.getMessage());
         }
     }
 

@@ -1,5 +1,8 @@
 # MCP 错误码规范
 
+> **v2.0 说明**：v2.0 基于官方 MCP Java SDK，传输层（JSON-RPC 2.0）错误由 SDK 自动处理，业务代码无需手动构造错误响应。
+> 工具执行失败统一通过 `ToolHandler.execute` 抛出 `RuntimeException` 实现，框架层会将其包装为 `McpSchema.CallToolResult`（其中 `isError=true`、内容含错误信息），**不再使用下述自定义 MCP 错误码（-32001 ~ -32006）**。下述标准 JSON-RPC 错误码仅作传输层参考。
+
 ## JSON-RPC 标准错误码
 
 | 错误码 | 名称 | HTTP 状态码 | 说明 |

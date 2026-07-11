@@ -1,8 +1,6 @@
 package io.yunxi.mcp.git.tool;
 
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -66,27 +64,46 @@ public class GitTools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("git_status")
-                    .description(
-                            "Get Git repository status. " +
+
+        public String getName() {
+
+            return "git_status";
+
+        }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "Get Git repository status. " +
                                     "获取Git仓库状态。 " +
                                     "Use this when you need to check current branch, modified files, or untracked files. "
                                     +
                                     "适用于检查当前分支、已修改文件或未跟踪文件等场景。 " +
                                     "Common use cases: checking repo status, reviewing changes, preparing for commit. "
                                     +
-                                    "典型用例：检查仓库状态、审查更改、准备提交。")
-                    .inputSchema(Map.of(
+                                    "典型用例：检查仓库状态、审查更改、准备提交。";
+
+        }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) Map.of(
                             "type", "object",
                             "properties", Map.of(
                                     "repo_path", Map.of(
                                             "type", "string",
                                             "description",
-                                            "Path to the Git repository. Example: '/path/to/repo' | Git仓库路径。示例: '/path/to/repo'"))))
-                    .build();
+                                            "Path to the Git repository. Example: '/path/to/repo' | Git仓库路径。示例: '/path/to/repo'")));
+
         }
+
 
         /**
          * 执行获取仓库状态操作
@@ -101,7 +118,7 @@ public class GitTools {
          * @return 工具执行结果，包含仓库状态信息
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             // 获取仓库路径，优先使用参数中的路径
             String repoPath = (String) args.getOrDefault("repo_path", this.repoPath.getPath());
             try (Git git = Git.open(new File(repoPath))) {
@@ -122,9 +139,9 @@ public class GitTools {
                     sb.append("  ? ").append(f).append("\n");
                 }
 
-                return ToolResult.text(sb.toString());
+                return (sb.toString());
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
 
@@ -180,18 +197,36 @@ public class GitTools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("git_log")
-                    .description(
-                            "Get Git commit log. " +
+
+        public String getName() {
+
+            return "git_log";
+
+        }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "Get Git commit log. " +
                                     "获取Git提交日志。 " +
                                     "Use this when you need to view commit history, check recent changes, or find specific commits. "
                                     +
                                     "适用于查看提交历史、检查最近更改或查找特定提交等场景。 " +
                                     "Common use cases: reviewing history, finding bugs, understanding changes. " +
-                                    "典型用例：查看历史、查找问题、理解变更。")
-                    .inputSchema(Map.of(
+                                    "典型用例：查看历史、查找问题、理解变更。";
+
+        }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) Map.of(
                             "type", "object",
                             "properties", Map.of(
                                     "repo_path", Map.of(
@@ -201,9 +236,10 @@ public class GitTools {
                                     "max_count", Map.of(
                                             "type", "integer",
                                             "description",
-                                            "Maximum number of commits to show (default: 10). Example: 20 | 显示的最大提交数（默认: 10）。示例: 20"))))
-                    .build();
+                                            "Maximum number of commits to show (default: 10). Example: 20 | 显示的最大提交数（默认: 10）。示例: 20")));
+
         }
+
 
         /**
          * 执行获取提交日志操作
@@ -219,7 +255,7 @@ public class GitTools {
          * @return 工具执行结果，包含提交日志信息
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             // 获取仓库路径，优先使用参数中的路径
             String repoPath = (String) args.getOrDefault("repo_path", this.repoPath.getPath());
             // 获取最大提交数，默认 10
@@ -244,9 +280,9 @@ public class GitTools {
                     count++;
                 }
 
-                return ToolResult.text("Showing " + count + " commit(s):\n\n" + sb);
+                return ("Showing " + count + " commit(s):\n\n" + sb);
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
 
@@ -298,26 +334,45 @@ public class GitTools {
          * @return 工具定义对象
          */
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("git_branches")
-                    .description(
-                            "List Git branches. " +
+
+        public String getName() {
+
+            return "git_branches";
+
+        }
+
+
+        @Override
+
+        public String getDescription() {
+
+            return "List Git branches. " +
                                     "列出Git分支。 " +
                                     "Use this when you need to see all branches, check current branch, or plan branch operations. "
                                     +
                                     "适用于查看所有分支、检查当前分支或规划分支操作等场景。 " +
                                     "Common use cases: branch management, release planning, feature development. " +
-                                    "典型用例：分支管理、发布规划、功能开发。")
-                    .inputSchema(Map.of(
+                                    "典型用例：分支管理、发布规划、功能开发。";
+
+        }
+
+
+        @Override
+
+        @SuppressWarnings("unchecked")
+
+        public Map<String, Object> getInputSchema() {
+
+            return (Map<String, Object>) (Map) Map.of(
                             "type", "object",
                             "properties", Map.of(
                                     "repo_path", Map.of(
                                             "type", "string",
                                             "description",
-                                            "Path to the Git repository. Example: '/path/to/repo' | Git仓库路径。示例: '/path/to/repo'"))))
-                    .build();
+                                            "Path to the Git repository. Example: '/path/to/repo' | Git仓库路径。示例: '/path/to/repo'")));
+
         }
+
 
         /**
          * 执行获取分支列表操作
@@ -332,7 +387,7 @@ public class GitTools {
          * @return 工具执行结果，包含分支列表信息
          */
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             String repoPath = (String) args.getOrDefault("repo_path", this.repoPath.getPath());
 
             try (Git git = Git.open(new File(repoPath))) {
@@ -351,9 +406,9 @@ public class GitTools {
                     sb.append("\n");
                 }
 
-                return ToolResult.text(sb.toString());
+                return (sb.toString());
             } catch (Exception e) {
-                return ToolResult.error("Error: " + e.getMessage());
+                throw new RuntimeException("Error: " + e.getMessage());
             }
         }
 

@@ -1,13 +1,16 @@
 package io.yunxi.mcp.playwright.tool;
 
 import io.yunxi.mcp.playwright.service.PlaywrightService;
+import io.yunxi.mcp.common.util.ToolResult;
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
+import io.yunxi.mcp.common.util.ToolResult;
 import lombok.extern.slf4j.Slf4j;
+import io.yunxi.mcp.common.util.ToolResult;
 import org.springframework.stereotype.Component;
+import io.yunxi.mcp.common.util.ToolResult;
 
 import java.util.*;
+import io.yunxi.mcp.common.util.ToolResult;
 
 /**
  * Playwright MCP 工具集
@@ -38,11 +41,30 @@ public class PlaywrightTools {
     public ToolHandler startBrowser() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("playwright_start_browser")
-                        .description("启动 Playwright 浏览器。用于开始一个自动化浏览器会话，支持 Chromium、Firefox、WebKit 等浏览器引擎。")
-                        .inputSchema(Map.of(
+
+            public String getName() {
+
+                return "playwright_start_browser";
+
+            }
+
+
+            @Override
+
+            public String getDescription() {
+
+                return "启动 Playwright 浏览器。用于开始一个自动化浏览器会话，支持 Chromium、Firefox、WebKit 等浏览器引擎。";
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of(
                                 "type", "object",
                                 "properties", Map.of(
                                         "headless", Map.of(
@@ -56,17 +78,18 @@ public class PlaywrightTools {
                                         )
                                 ),
                                 "required", List.of()
-                        ))
-                        .build();
+                        );
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+            public String execute(Map<String, Object> arguments) {
                 try {
                     boolean success = playwrightService.startBrowser();
                     return success ? ToolResult.text("浏览器启动成功") : ToolResult.error("浏览器启动失败");
                 } catch (Exception e) {
-                    return ToolResult.error("启动浏览器时发生错误: " + e.getMessage());
+                    throw new RuntimeException("启动浏览器时发生错误: " + e.getMessage());
                 }
             }
         };
@@ -75,11 +98,30 @@ public class PlaywrightTools {
     public ToolHandler navigate() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("playwright_navigate")
-                        .description("导航到指定 URL 地址。在浏览器中打开指定的网页链接。")
-                        .inputSchema(Map.of(
+
+            public String getName() {
+
+                return "playwright_navigate";
+
+            }
+
+
+            @Override
+
+            public String getDescription() {
+
+                return "导航到指定 URL 地址。在浏览器中打开指定的网页链接。";
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of(
                                 "type", "object",
                                 "properties", Map.of(
                                         "url", Map.of(
@@ -93,18 +135,19 @@ public class PlaywrightTools {
                                         )
                                 ),
                                 "required", List.of("url")
-                        ))
-                        .build();
+                        );
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+            public String execute(Map<String, Object> arguments) {
                 try {
                     String url = (String) arguments.get("url");
                     boolean success = playwrightService.navigate(url);
                     return success ? ToolResult.text("成功导航到: " + url) : ToolResult.error("导航失败");
                 } catch (Exception e) {
-                    return ToolResult.error("导航时发生错误: " + e.getMessage());
+                    throw new RuntimeException("导航时发生错误: " + e.getMessage());
                 }
             }
         };
@@ -113,11 +156,30 @@ public class PlaywrightTools {
     public ToolHandler getPageContent() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("playwright_get_content")
-                        .description("获取当前页面的 HTML 内容。用于读取网页源码或提取页面数据。")
-                        .inputSchema(Map.of(
+
+            public String getName() {
+
+                return "playwright_get_content";
+
+            }
+
+
+            @Override
+
+            public String getDescription() {
+
+                return "获取当前页面的 HTML 内容。用于读取网页源码或提取页面数据。";
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of(
                                 "type", "object",
                                 "properties", Map.of(
                                         "selector", Map.of(
@@ -126,18 +188,19 @@ public class PlaywrightTools {
                                         )
                                 ),
                                 "required", List.of()
-                        ))
-                        .build();
+                        );
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+            public String execute(Map<String, Object> arguments) {
                 try {
                     String content = playwrightService.getPageContent();
-                    return ToolResult.text("页面内容长度: " + content.length() + " 字符\n\n" + 
+                    return ("页面内容长度: " + content.length() + " 字符\n\n" + 
                             (content.length() > 2000 ? content.substring(0, 2000) + "..." : content));
                 } catch (Exception e) {
-                    return ToolResult.error("获取页面内容时发生错误: " + e.getMessage());
+                    throw new RuntimeException("获取页面内容时发生错误: " + e.getMessage());
                 }
             }
         };
@@ -146,11 +209,30 @@ public class PlaywrightTools {
     public ToolHandler click() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("playwright_click")
-                        .description("点击页面上的元素。通过 CSS 选择器定位元素并执行点击操作。")
-                        .inputSchema(Map.of(
+
+            public String getName() {
+
+                return "playwright_click";
+
+            }
+
+
+            @Override
+
+            public String getDescription() {
+
+                return "点击页面上的元素。通过 CSS 选择器定位元素并执行点击操作。";
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of(
                                 "type", "object",
                                 "properties", Map.of(
                                         "selector", Map.of(
@@ -163,18 +245,19 @@ public class PlaywrightTools {
                                         )
                                 ),
                                 "required", List.of("selector")
-                        ))
-                        .build();
+                        );
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+            public String execute(Map<String, Object> arguments) {
                 try {
                     String selector = (String) arguments.get("selector");
                     boolean success = playwrightService.click(selector);
                     return success ? ToolResult.text("成功点击元素: " + selector) : ToolResult.error("点击失败");
                 } catch (Exception e) {
-                    return ToolResult.error("点击元素时发生错误: " + e.getMessage());
+                    throw new RuntimeException("点击元素时发生错误: " + e.getMessage());
                 }
             }
         };
@@ -183,11 +266,30 @@ public class PlaywrightTools {
     public ToolHandler type() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("playwright_type")
-                        .description("在输入框中输入文本。通过 CSS 选择器定位输入框并输入指定内容。")
-                        .inputSchema(Map.of(
+
+            public String getName() {
+
+                return "playwright_type";
+
+            }
+
+
+            @Override
+
+            public String getDescription() {
+
+                return "在输入框中输入文本。通过 CSS 选择器定位输入框并输入指定内容。";
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of(
                                 "type", "object",
                                 "properties", Map.of(
                                         "selector", Map.of(
@@ -204,19 +306,20 @@ public class PlaywrightTools {
                                         )
                                 ),
                                 "required", List.of("selector", "text")
-                        ))
-                        .build();
+                        );
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+            public String execute(Map<String, Object> arguments) {
                 try {
                     String selector = (String) arguments.get("selector");
                     String text = (String) arguments.get("text");
                     boolean success = playwrightService.type(selector, text);
                     return success ? ToolResult.text("成功输入文本: " + text) : ToolResult.error("输入失败");
                 } catch (Exception e) {
-                    return ToolResult.error("输入文本时发生错误: " + e.getMessage());
+                    throw new RuntimeException("输入文本时发生错误: " + e.getMessage());
                 }
             }
         };
@@ -225,21 +328,41 @@ public class PlaywrightTools {
     public ToolHandler closeBrowser() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("playwright_close_browser")
-                        .description("关闭浏览器。结束浏览器会话并释放相关资源。")
-                        .inputSchema(Map.of("type", "object", "properties", Map.of()))
-                        .build();
+
+            public String getName() {
+
+                return "playwright_close_browser";
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+
+            public String getDescription() {
+
+                return "关闭浏览器。结束浏览器会话并释放相关资源。";
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of("type", "object", "properties", Map.of());
+
+            }
+
+
+            @Override
+            public String execute(Map<String, Object> arguments) {
                 try {
                     playwrightService.closeBrowser();
-                    return ToolResult.text("浏览器已关闭");
+                    return ("浏览器已关闭");
                 } catch (Exception e) {
-                    return ToolResult.error("关闭浏览器时发生错误: " + e.getMessage());
+                    throw new RuntimeException("关闭浏览器时发生错误: " + e.getMessage());
                 }
             }
         };

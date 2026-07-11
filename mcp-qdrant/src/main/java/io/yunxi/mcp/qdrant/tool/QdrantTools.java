@@ -6,8 +6,6 @@ import io.qdrant.client.grpc.Points.ScoredPoint;
 import io.qdrant.client.grpc.Points.WithPayloadSelector;
 import io.yunxi.mcp.qdrant.QdrantConfig;
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -46,23 +44,53 @@ public class QdrantTools {
         }
 
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("qdrant_search")
-                    .description(
-                            "Qdrant 向量搜索 (Vector Search) - 在向量数据库中搜索相似内容。" +
-                                    "典型用例：语义搜索、相似图片查找、推荐系统。")
-                    .inputSchema(QdrantTools.schema(
+
+
+        public String getName() {
+
+
+            return "qdrant_search";
+
+
+        }
+
+
+
+        @Override
+
+
+        public String getDescription() {
+
+
+            return "Qdrant 向量搜索 (Vector Search) - 在向量数据库中搜索相似内容。" +
+                                    "典型用例：语义搜索、相似图片查找、推荐系统。";
+
+
+        }
+
+
+
+        @Override
+
+
+        @SuppressWarnings("unchecked")
+
+
+        public Map<String, Object> getInputSchema() {
+
+
+            return (Map<String, Object>) (Map) QdrantTools.schema(
                             "collection", "string", "Collection name. 集合名称。",
                             "query_vector", "array", "Query vector. 查询向量。",
                             "top_k", "integer", "Number of results (default 10). 返回结果数。",
-                            "score_threshold", "float", "Minimum score (0-1). 最小相似度分数。")
-                    )
-                    .build();
+                            "score_threshold", "float", "Minimum score (0-1). 最小相似度分数。");
+
+
         }
 
+
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+        public String execute(Map<String, Object> args) {
             String collection = (String) args.get("collection");
             Object queryVector = args.get("query_vector");
             Integer topK = args.containsKey("top_k") ? ((Number) args.get("top_k")).intValue() : null;
@@ -70,11 +98,11 @@ public class QdrantTools {
                     ? ((Number) args.get("score_threshold")).doubleValue() : null;
 
             if (collection == null || collection.isBlank()) {
-                return ToolResult.error("Error: collection is required");
+                throw new RuntimeException("Error: collection is required");
             }
 
             if (queryVector == null) {
-                return ToolResult.error("Error: query_vector is required");
+                throw new RuntimeException("Error: query_vector is required");
             }
 
             return parent.search(collection, queryVector, topK, scoreThreshold);
@@ -93,18 +121,49 @@ public class QdrantTools {
         }
 
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("qdrant_list_collections")
-                    .description(
-                            "列出 Qdrant 集合 (List Collections) - 获取所有集合的名称。" +
-                                    "典型用例：查看有哪些向量集合、检查数据分布。")
-                    .inputSchema(QdrantTools.schema())
-                    .build();
+
+
+        public String getName() {
+
+
+            return "qdrant_list_collections";
+
+
         }
 
+
+
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+
+
+        public String getDescription() {
+
+
+            return "列出 Qdrant 集合 (List Collections) - 获取所有集合的名称。" +
+                                    "典型用例：查看有哪些向量集合、检查数据分布。";
+
+
+        }
+
+
+
+        @Override
+
+
+        @SuppressWarnings("unchecked")
+
+
+        public Map<String, Object> getInputSchema() {
+
+
+            return (Map<String, Object>) (Map) QdrantTools.schema();
+
+
+        }
+
+
+        @Override
+        public String execute(Map<String, Object> args) {
             return parent.listCollections();
         }
     }
@@ -121,23 +180,53 @@ public class QdrantTools {
         }
 
         @Override
-        public ToolDefinition getDefinition() {
-            return ToolDefinition.builder()
-                    .name("qdrant_collection_info")
-                    .description(
-                            "获取集合信息 (Collection Info) - 获取指定集合的详细信息。" +
-                                    "典型用例：查看集合状态、向量维度、索引配置。")
-                    .inputSchema(QdrantTools.schema(
-                            "collection", "string", "Collection name. 集合名称。")
-                    )
-                    .build();
+
+
+        public String getName() {
+
+
+            return "qdrant_collection_info";
+
+
         }
 
+
+
         @Override
-        public ToolResult execute(Map<String, Object> args) {
+
+
+        public String getDescription() {
+
+
+            return "获取集合信息 (Collection Info) - 获取指定集合的详细信息。" +
+                                    "典型用例：查看集合状态、向量维度、索引配置。";
+
+
+        }
+
+
+
+        @Override
+
+
+        @SuppressWarnings("unchecked")
+
+
+        public Map<String, Object> getInputSchema() {
+
+
+            return (Map<String, Object>) (Map) QdrantTools.schema(
+                            "collection", "string", "Collection name. 集合名称。");
+
+
+        }
+
+
+        @Override
+        public String execute(Map<String, Object> args) {
             String collection = (String) args.get("collection");
             if (collection == null || collection.isBlank()) {
-                return ToolResult.error("Error: collection is required");
+                throw new RuntimeException("Error: collection is required");
             }
             return parent.getCollectionInfo(collection);
         }
@@ -146,7 +235,7 @@ public class QdrantTools {
     /**
      * 执行向量搜索
      */
-    private ToolResult search(String collection, Object queryVector,
+    private String search(String collection, Object queryVector,
                                Integer topK, Double scoreThreshold) {
         try {
             int k = topK != null ? topK : config.getDefaultTopK();
@@ -159,7 +248,7 @@ public class QdrantTools {
                 List<Number> numList = (List<Number>) queryVector;
                 vectorList = new ArrayList<>(numList.stream().map(Number::floatValue).toList());
             } else {
-                return ToolResult.error("Error: query_vector must be a list of numbers");
+                throw new RuntimeException("Error: query_vector must be a list of numbers");
             }
 
             // 构建 SearchPoints 请求
@@ -174,7 +263,7 @@ public class QdrantTools {
             List<ScoredPoint> results = client.searchAsync(searchPoints).get();
 
             if (results.isEmpty()) {
-                return ToolResult.text("No results found in collection: " + collection);
+                return ("No results found in collection: " + collection);
             }
 
             StringBuilder sb = new StringBuilder();
@@ -191,21 +280,21 @@ public class QdrantTools {
             }
 
             if (index == 1) {
-                return ToolResult.text("No results above threshold " + threshold);
+                return ("No results above threshold " + threshold);
             }
 
-            return ToolResult.text(sb.toString());
+            return (sb.toString());
 
         } catch (Exception e) {
             log.error("Qdrant search error: {}", e.getMessage(), e);
-            return ToolResult.error("Error: " + e.getMessage());
+            throw new RuntimeException("Error: " + e.getMessage());
         }
     }
 
     /**
      * 列出所有集合
      */
-    private ToolResult listCollections() {
+    private String listCollections() {
         try {
             List<String> collections = client.listCollectionsAsync().get();
 
@@ -216,18 +305,18 @@ public class QdrantTools {
                 sb.append("• ").append(name).append("\n");
             }
 
-            return ToolResult.text(sb.toString());
+            return (sb.toString());
 
         } catch (Exception e) {
             log.error("List collections error: {}", e.getMessage(), e);
-            return ToolResult.error("Error: " + e.getMessage());
+            throw new RuntimeException("Error: " + e.getMessage());
         }
     }
 
     /**
      * 获取集合信息
      */
-    private ToolResult getCollectionInfo(String collection) {
+    private String getCollectionInfo(String collection) {
         try {
             var info = client.getCollectionInfoAsync(collection).get();
 
@@ -237,11 +326,11 @@ public class QdrantTools {
             sb.append("Vectors Count: ").append(info.getVectorsCount()).append("\n");
             sb.append("Points Count: ").append(info.getPointsCount()).append("\n");
 
-            return ToolResult.text(sb.toString());
+            return (sb.toString());
 
         } catch (Exception e) {
             log.error("Get collection info error: {}", e.getMessage(), e);
-            return ToolResult.error("Error: " + e.getMessage());
+            throw new RuntimeException("Error: " + e.getMessage());
         }
     }
 

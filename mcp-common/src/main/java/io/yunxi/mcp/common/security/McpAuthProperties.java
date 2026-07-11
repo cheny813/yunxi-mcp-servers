@@ -49,7 +49,7 @@ public class McpAuthProperties {
     /**
      * 白名单路径（无需认证）
      */
-    private List<String> whitelist = List.of("/mcp/health", "/mcp/info");
+    private List<String> whitelist = List.of();
 
     /**
      * 认证头名称

@@ -2,11 +2,10 @@ package io.yunxi.mcp.chart.tool;
 
 import io.yunxi.mcp.chart.service.ChartService;
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,18 +31,36 @@ public class ChartTools {
     public ToolHandler barChart() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("chart_bar")
-                        .description(
-                                "Generate a bar chart for comparing data across categories. " +
+
+            public String getName() {
+
+                return "chart_bar";
+
+            }
+
+
+            @Override
+
+            public String getDescription() {
+
+                return "Generate a bar chart for comparing data across categories. " +
                                 "生成柱状图用于对比不同类别的数据。 " +
                                 "Use this when you need to compare multiple data points. " +
                                 "适用于需要对比多个数据点的场景。 " +
                                 "Common use cases: sales comparison, performance metrics, survey results. " +
                                 "典型用例：销售对比、性能指标、调查结果。"
-                        )
-                        .inputSchema(Map.of(
+                        ;
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of(
                                 "type", "object",
                                 "properties", Map.of(
                                         "title", Map.of(
@@ -77,12 +94,13 @@ public class ChartTools {
                                         )
                                 ),
                                 "required", java.util.List.of("categories", "series")
-                        ))
-                        .build();
+                        );
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+            public String execute(Map<String, Object> arguments) {
                 try {
                     log.debug("执行柱状图生成: args={}", arguments);
 
@@ -94,7 +112,7 @@ public class ChartTools {
 
                     ChartService.ChartResult result = chartService.generateChart(config);
 
-                    return ToolResult.text(String.format(
+                    return (String.format(
                             "图表生成成功！\n" +
                             "图表ID: %s\n" +
                             "文件URL: http://localhost:40302%s\n" +
@@ -106,7 +124,7 @@ public class ChartTools {
 
                 } catch (Exception e) {
                     log.error("柱状图生成失败: {}", e.getMessage(), e);
-                    return ToolResult.error("图表生成失败: " + e.getMessage());
+                    throw new RuntimeException("图表生成失败: " + e.getMessage());
                 }
             }
         };
@@ -118,18 +136,36 @@ public class ChartTools {
     public ToolHandler lineChart() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("chart_line")
-                        .description(
-                                "Generate a line chart to show trends over time. " +
+
+            public String getName() {
+
+                return "chart_line";
+
+            }
+
+
+            @Override
+
+            public String getDescription() {
+
+                return "Generate a line chart to show trends over time. " +
                                 "生成折线图用于展示数据随时间的变化趋势。 " +
                                 "Use this when you need to visualize data changes over time. " +
                                 "适用于需要展示数据随时间变化的场景。 " +
                                 "Common use cases: sales trends, temperature monitoring, stock prices. " +
                                 "典型用例：销售趋势、温度监控、股票价格。"
-                        )
-                        .inputSchema(Map.of(
+                        ;
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of(
                                 "type", "object",
                                 "properties", Map.of(
                                         "title", Map.of(
@@ -163,12 +199,13 @@ public class ChartTools {
                                         )
                                 ),
                                 "required", java.util.List.of("xAxis", "series")
-                        ))
-                        .build();
+                        );
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+            public String execute(Map<String, Object> arguments) {
                 try {
                     log.debug("执行折线图生成: args={}", arguments);
 
@@ -180,7 +217,7 @@ public class ChartTools {
 
                     ChartService.ChartResult result = chartService.generateChart(config);
 
-                    return ToolResult.text(String.format(
+                    return (String.format(
                             "图表生成成功！\n" +
                             "图表ID: %s\n" +
                             "文件URL: http://localhost:40302%s",
@@ -190,7 +227,7 @@ public class ChartTools {
 
                 } catch (Exception e) {
                     log.error("折线图生成失败: {}", e.getMessage(), e);
-                    return ToolResult.error("图表生成失败: " + e.getMessage());
+                    throw new RuntimeException("图表生成失败: " + e.getMessage());
                 }
             }
         };
@@ -202,18 +239,36 @@ public class ChartTools {
     public ToolHandler pieChart() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("chart_pie")
-                        .description(
-                                "Generate a pie chart to show proportions of a whole. " +
+
+            public String getName() {
+
+                return "chart_pie";
+
+            }
+
+
+            @Override
+
+            public String getDescription() {
+
+                return "Generate a pie chart to show proportions of a whole. " +
                                 "生成饼图用于展示各部分占整体的比例。 " +
                                 "Use this when you need to show percentage or proportion data. " +
                                 "适用于需要展示百分比或比例数据的场景。 " +
                                 "Common use cases: market share, expense breakdown, survey results. " +
                                 "典型用例：市场份额、费用分解、调查结果。"
-                        )
-                        .inputSchema(Map.of(
+                        ;
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of(
                                 "type", "object",
                                 "properties", Map.of(
                                         "title", Map.of(
@@ -239,12 +294,13 @@ public class ChartTools {
                                         )
                                 ),
                                 "required", java.util.List.of("data")
-                        ))
-                        .build();
+                        );
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+            public String execute(Map<String, Object> arguments) {
                 try {
                     log.debug("执行饼图生成: args={}", arguments);
 
@@ -271,7 +327,7 @@ public class ChartTools {
 
                     ChartService.ChartResult result = chartService.generateChart(config);
 
-                    return ToolResult.text(String.format(
+                    return (String.format(
                             "饼图生成成功！\n" +
                             "图表ID: %s\n" +
                             "文件URL: http://localhost:40302%s",
@@ -281,7 +337,7 @@ public class ChartTools {
 
                 } catch (Exception e) {
                     log.error("饼图生成失败: {}", e.getMessage(), e);
-                    return ToolResult.error("饼图生成失败: " + e.getMessage());
+                    throw new RuntimeException("饼图生成失败: " + e.getMessage());
                 }
             }
         };
@@ -293,18 +349,36 @@ public class ChartTools {
     public ToolHandler areaChart() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("chart_area")
-                        .description(
-                                "Generate an area chart to show trends with filled area. " +
+
+            public String getName() {
+
+                return "chart_area";
+
+            }
+
+
+            @Override
+
+            public String getDescription() {
+
+                return "Generate an area chart to show trends with filled area. " +
                                 "生成面积图用于展示带填充区域的变化趋势。 " +
                                 "Use this when you want to emphasize the volume of data. " +
                                 "适用于需要强调数据体量的场景。 " +
                                 "Common use cases: website traffic, resource usage, cumulative data. " +
                                 "典型用例：网站流量、资源使用、累积数据。"
-                        )
-                        .inputSchema(Map.of(
+                        ;
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of(
                                 "type", "object",
                                 "properties", Map.of(
                                         "title", Map.of(
@@ -333,12 +407,13 @@ public class ChartTools {
                                         )
                                 ),
                                 "required", java.util.List.of("xAxis", "series")
-                        ))
-                        .build();
+                        );
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+            public String execute(Map<String, Object> arguments) {
                 try {
                     log.debug("执行面积图生成: args={}", arguments);
 
@@ -350,7 +425,7 @@ public class ChartTools {
 
                     ChartService.ChartResult result = chartService.generateChart(config);
 
-                    return ToolResult.text(String.format(
+                    return (String.format(
                             "面积图生成成功！\n" +
                             "图表ID: %s\n" +
                             "文件URL: http://localhost:40302%s",
@@ -360,7 +435,7 @@ public class ChartTools {
 
                 } catch (Exception e) {
                     log.error("面积图生成失败: {}", e.getMessage(), e);
-                    return ToolResult.error("面积图生成失败: " + e.getMessage());
+                    throw new RuntimeException("面积图生成失败: " + e.getMessage());
                 }
             }
         };
@@ -372,18 +447,36 @@ public class ChartTools {
     public ToolHandler radarChart() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("chart_radar")
-                        .description(
-                                "Generate a radar chart for multi-dimensional comparison. " +
+
+            public String getName() {
+
+                return "chart_radar";
+
+            }
+
+
+            @Override
+
+            public String getDescription() {
+
+                return "Generate a radar chart for multi-dimensional comparison. " +
                                 "生成雷达图用于多维度数据对比。 " +
                                 "Use this when you need to compare multiple dimensions. " +
                                 "适用于需要对比多个维度的场景。 " +
                                 "Common use cases: skill assessment, performance metrics, product comparison. " +
                                 "典型用例：技能评估、性能指标、产品对比。"
-                        )
-                        .inputSchema(Map.of(
+                        ;
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of(
                                 "type", "object",
                                 "properties", Map.of(
                                         "title", Map.of(
@@ -412,12 +505,13 @@ public class ChartTools {
                                         )
                                 ),
                                 "required", java.util.List.of("indicators", "series")
-                        ))
-                        .build();
+                        );
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+            public String execute(Map<String, Object> arguments) {
                 try {
                     log.debug("执行雷达图生成: args={}", arguments);
 
@@ -429,7 +523,7 @@ public class ChartTools {
 
                     ChartService.ChartResult result = chartService.generateChart(config);
 
-                    return ToolResult.text(String.format(
+                    return (String.format(
                             "雷达图生成成功！\n" +
                             "图表ID: %s\n" +
                             "文件URL: http://localhost:40302%s",
@@ -439,7 +533,7 @@ public class ChartTools {
 
                 } catch (Exception e) {
                     log.error("雷达图生成失败: {}", e.getMessage(), e);
-                    return ToolResult.error("雷达图生成失败: " + e.getMessage());
+                    throw new RuntimeException("雷达图生成失败: " + e.getMessage());
                 }
             }
         };
@@ -451,18 +545,36 @@ public class ChartTools {
     public ToolHandler scatterChart() {
         return new ToolHandler() {
             @Override
-            public ToolDefinition getDefinition() {
-                return ToolDefinition.builder()
-                        .name("chart_scatter")
-                        .description(
-                                "Generate a scatter plot to show data distribution. " +
+
+            public String getName() {
+
+                return "chart_scatter";
+
+            }
+
+
+            @Override
+
+            public String getDescription() {
+
+                return "Generate a scatter plot to show data distribution. " +
                                 "生成散点图用于展示数据分布情况。 " +
                                 "Use this when you need to analyze correlation or distribution. " +
                                 "适用于需要分析相关性或分布的场景。 " +
                                 "Common use cases: correlation analysis, outlier detection, data clustering. " +
                                 "典型用例：相关性分析、异常值检测、数据聚类。"
-                        )
-                        .inputSchema(Map.of(
+                        ;
+
+            }
+
+
+            @Override
+
+            @SuppressWarnings("unchecked")
+
+            public Map<String, Object> getInputSchema() {
+
+                return (Map<String, Object>) (Map) Map.of(
                                 "type", "object",
                                 "properties", Map.of(
                                         "title", Map.of(
@@ -497,12 +609,13 @@ public class ChartTools {
                                         )
                                 ),
                                 "required", java.util.List.of("series")
-                        ))
-                        .build();
+                        );
+
             }
 
+
             @Override
-            public ToolResult execute(Map<String, Object> arguments) {
+            public String execute(Map<String, Object> arguments) {
                 try {
                     log.debug("执行散点图生成: args={}", arguments);
 
@@ -513,7 +626,7 @@ public class ChartTools {
 
                     ChartService.ChartResult result = chartService.generateChart(config);
 
-                    return ToolResult.text(String.format(
+                    return (String.format(
                             "散点图生成成功！\n" +
                             "图表ID: %s\n" +
                             "文件URL: http://localhost:40302%s",
@@ -523,7 +636,7 @@ public class ChartTools {
 
                 } catch (Exception e) {
                     log.error("散点图生成失败: {}", e.getMessage(), e);
-                    return ToolResult.error("散点图生成失败: " + e.getMessage());
+                    throw new RuntimeException("散点图生成失败: " + e.getMessage());
                 }
             }
         };

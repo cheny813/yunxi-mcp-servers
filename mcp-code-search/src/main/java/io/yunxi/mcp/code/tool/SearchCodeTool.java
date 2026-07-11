@@ -1,8 +1,8 @@
 package io.yunxi.mcp.code.tool;
 
+import org.springframework.stereotype.Component;
+
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.common.model.ToolDefinition;
-import io.yunxi.mcp.common.model.ToolResult;
 import io.yunxi.mcp.code.service.CodeSearchService;
 
 import java.util.List;
@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
  * @see CodeSearchService
  * @since 1.0.0
  */
+@Component
 public class SearchCodeTool implements ToolHandler {
 
     /** 代码搜索服务 */
@@ -58,26 +59,30 @@ public class SearchCodeTool implements ToolHandler {
      * @return 工具定义，包含名称、描述和参数模式
      */
     @Override
-    public ToolDefinition getDefinition() {
-        return ToolDefinition.builder()
-                .name("search_code")
-                .description(
-                        "搜索代码库中的代码。\n" +
-                                "根据关键词搜索所有代码文件，返回匹配的代码片段和文件位置。\n" +
-                                "用于理解代码结构、查找实现位置、分析业务逻辑。")
-                .inputSchema(Map.of(
-                        "type", "object",
-                        "properties", Map.of(
-                                "keyword", Map.of(
-                                        "type", "string",
-                                        "description", "搜索关键词"),
-                                "filePattern", Map.of(
-                                        "type", "string",
-                                        "description", "文件路径过滤，如 *.java, **/service/*.java"),
-                                "maxResults", Map.of(
-                                        "type", "number",
-                                        "description", "最大结果数，默认10"))))
-                .build();
+    public String getName() {
+        return "search_code";
+    }
+
+    @Override
+    public String getDescription() {
+        return "搜索代码库中的代码。\n根据关键词搜索所有代码文件，返回匹配的代码片段和文件位置。\n用于理解代码结构、查找实现位置、分析业务逻辑。";
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getInputSchema() {
+        return (Map<String, Object>) (Map) Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "keyword", Map.of(
+                                "type", "string",
+                                "description", "搜索关键词"),
+                        "filePattern", Map.of(
+                                "type", "string",
+                                "description", "文件路径过滤，如 *.java, **/service/*.java"),
+                        "maxResults", Map.of(
+                                "type", "number",
+                                "description", "最大结果数，默认10")));
     }
 
     /**
@@ -87,7 +92,7 @@ public class SearchCodeTool implements ToolHandler {
      * @return 搜索结果，包含匹配的文件和代码片段
      */
     @Override
-    public ToolResult execute(Map<String, Object> arguments) {
+    public String execute(Map<String, Object> arguments) {
         String keyword = (String) arguments.get("keyword");
         String filePattern = (String) arguments.get("filePattern");
         int maxResults = arguments.containsKey("maxResults")
@@ -95,7 +100,7 @@ public class SearchCodeTool implements ToolHandler {
                 : 10;
 
         if (keyword == null || keyword.isBlank()) {
-            return ToolResult.error("keyword is required");
+            throw new RuntimeException("keyword is required");
         }
 
         try {
@@ -103,7 +108,7 @@ public class SearchCodeTool implements ToolHandler {
                     maxResults);
 
             if (results.isEmpty()) {
-                return ToolResult.text("未找到匹配的代码");
+                return "未找到匹配的代码";
             }
 
             StringBuilder sb = new StringBuilder();
@@ -120,9 +125,9 @@ public class SearchCodeTool implements ToolHandler {
                 sb.append("\n");
             }
 
-            return ToolResult.text(sb.toString());
+            return sb.toString();
         } catch (Exception e) {
-            return ToolResult.error("搜索代码失败: " + e.getMessage());
+            throw new RuntimeException("搜索代码失败: " + e.getMessage());
         }
     }
 }
