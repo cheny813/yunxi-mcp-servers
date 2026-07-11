@@ -499,7 +499,7 @@ java -jar target/mcp-memory-tool-1.0.0.jar
 
 ## 许可证
 
-本项目采用根目录 [LICENSE](../LICENSE) 中的开源许可证（Apache 2.0）。
+本项目采用根目录 [LICENSE](../LICENSE) 中的 MIT 开源许可证。
 
 ## 贡献指南
 
