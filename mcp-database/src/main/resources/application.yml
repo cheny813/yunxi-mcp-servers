@@ -5,11 +5,8 @@ spring:
   application:
     name: yunxi-mcp-database
 
-mcp:
-  server:
-    name: yunxi-mcp-database
-    version: 2.0.0
-
+  # 默认库（nutrition）：供 DistrictService 注入 Spring DataSource Bean，
+  # 同时由 DatabaseController 读取并注册为 id="default"。
   datasource:
     url: jdbc:mysql://${DB_HOST:192.168.10.153}:${DB_PORT:3306}/${DB_NAME:nutrition_zhaoxian}?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: ${DB_USERNAME:root}
@@ -19,6 +16,11 @@ mcp:
       maximum-pool-size: 5
       minimum-idle: 1
       connection-timeout: 30000
+
+mcp:
+  server:
+    name: yunxi-mcp-database
+    version: 2.0.0
 
 # ============================================================
 # 多数据库配置

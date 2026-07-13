@@ -13,9 +13,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * 
  * <pre>
  * java -jar mcp-database-http.jar --server.port=8081 \
- *   --spring.datasource.url=\${DATABASE_URL:jdbc:mysql://localhost:3306/test} \
- *   --spring.datasource.username=\${DATABASE_USERNAME:root} \
- *   --spring.datasource.password={DATABASE_PASSWORD:root}
+ *   --spring.datasource.url=jdbc:mysql://\${DB_HOST:192.168.10.153}:\${DB_PORT:3306}/\${DB_NAME:nutrition_zhaoxian}?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true \
+ *   --spring.datasource.username=\${DB_USERNAME:root} \
+ *   --spring.datasource.password=\${DB_PASSWORD:root}
  * </pre>
  */
 @SpringBootApplication

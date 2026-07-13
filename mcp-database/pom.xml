@@ -27,7 +27,7 @@
             <artifactId>mcp-common</artifactId>
         </dependency>
 
-        <!-- Spring Boot JDBC (必需，用于自动配置DataSource) -->
+        <!-- Spring Boot JDBC (用于自动配置 spring.datasource,供 DistrictService 注入 DataSource Bean;多数据库由 mcp-databases + DatabaseConfigService 手动管理) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-jdbc</artifactId>
