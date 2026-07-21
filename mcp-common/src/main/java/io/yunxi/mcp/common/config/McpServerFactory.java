@@ -10,6 +10,7 @@ import io.yunxi.mcp.common.handler.ToolHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -62,7 +63,14 @@ public class McpServerFactory {
      * 创建 SSE 传输提供者
      * <p>
      * 官方 MCP SDK 的 SSE 传输实现，处理 /mcp/sse（建立 SSE 连接）和
-     * /mcp/message（发送 JSON-RPC 消息）两个端点。
+     * /mcp/sse/message（发送 JSON-RPC 消息）两个端点。
+     * </p>
+     * <p>
+     * <b>端点路径约定（重要）：</b>客户端（agentscope 的 McpClientBuilder.sseTransport）
+     * 会把配置 URL 整体当作 baseUri，并把 URL 的 path 当作 sseEndpoint。其底层 SDK 在 POST
+     * 消息时会用 {@code Utils.resolveUri(baseUri, messageEndpoint)} 校验，要求 message 端点的
+     * path 必须落在 baseUri 的 path 之下。因此 messageEndpoint 必须位于 sseEndpoint 路径之内
+     * （即 /mcp/sse/message），否则会抛 "Absolute endpoint URL does not match the base URL"。
      * </p>
      */
     @Bean
@@ -71,8 +79,26 @@ public class McpServerFactory {
                 .jsonMapper(McpJsonMapper.createDefault())
                 .baseUrl("http://localhost:" + serverPort)
                 .sseEndpoint("/mcp/sse")
-                .messageEndpoint("/mcp/message")
+                .messageEndpoint("/mcp/sse/message")
                 .build();
+    }
+
+    /**
+     * 将 SSE 传输 Servlet 注册到 Web 容器
+     * <p>
+     * HttpServletSseServerTransportProvider 本质是一个 HttpServlet，需映射到
+     * /mcp/sse（建立 SSE 连接）与 /mcp/sse/message（发送 JSON-RPC 消息）两个端点，
+     * 否则客户端访问会 404，MCP 握手超时。
+     * </p>
+     */
+    @Bean
+    public ServletRegistrationBean<HttpServletSseServerTransportProvider> mcpServletRegistration(
+            HttpServletSseServerTransportProvider transportProvider) {
+        ServletRegistrationBean<HttpServletSseServerTransportProvider> registration =
+                new ServletRegistrationBean<>(transportProvider);
+        registration.addUrlMappings("/mcp/sse", "/mcp/sse/message");
+        registration.setLoadOnStartup(1);
+        return registration;
     }
 
     /**
@@ -92,6 +118,7 @@ public class McpServerFactory {
 
         McpSyncServer server = McpServer.sync(transportProvider)
                 .serverInfo(serverName, serverVersion)
+                .capabilities(McpSchema.ServerCapabilities.builder().tools(true).build())
                 .build();
 
         log.info("MCP Server 初始化完成: name={}, version={}, port={}",
