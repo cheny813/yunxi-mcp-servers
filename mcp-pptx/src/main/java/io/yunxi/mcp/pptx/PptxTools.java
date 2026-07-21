@@ -1,26 +1,22 @@
 package io.yunxi.mcp.pptx;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.poi.xslf.usermodel.XMLSlideShow;
+import org.apache.poi.xslf.usermodel.XSLFShape;
+import org.apache.poi.xslf.usermodel.XSLFSlide;
+import org.apache.poi.xslf.usermodel.XSLFTextBox;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import io.yunxi.mcp.common.handler.ToolHandler;
 import io.yunxi.mcp.common.util.ToolResult;
 import lombok.extern.slf4j.Slf4j;
-import io.yunxi.mcp.common.util.ToolResult;
-import org.apache.poi.xslf.usermodel.XMLSlideShow;
-import io.yunxi.mcp.common.util.ToolResult;
-import org.apache.poi.xslf.usermodel.XSLFSlide;
-import io.yunxi.mcp.common.util.ToolResult;
-import org.apache.poi.xslf.usermodel.XSLFTextBox;
-import io.yunxi.mcp.common.util.ToolResult;
-import org.apache.poi.xslf.usermodel.XSLFShape;
-import io.yunxi.mcp.common.util.ToolResult;
-import org.springframework.beans.factory.annotation.Autowired;
-import io.yunxi.mcp.common.util.ToolResult;
-import org.springframework.stereotype.Component;
-import io.yunxi.mcp.common.util.ToolResult;
-
-import java.io.*;
-import io.yunxi.mcp.common.util.ToolResult;
-import java.util.*;
-import io.yunxi.mcp.common.util.ToolResult;
 
 /**
  * PowerPoint 处理工具

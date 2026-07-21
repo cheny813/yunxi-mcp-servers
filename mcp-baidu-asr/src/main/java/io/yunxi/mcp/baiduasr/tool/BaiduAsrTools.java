@@ -1,14 +1,5 @@
 package io.yunxi.mcp.baiduasr.tool;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.yunxi.mcp.baiduasr.BaiduAsrConfig;
-import io.yunxi.mcp.common.handler.ToolHandler;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.stereotype.Component;
-
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -19,6 +10,16 @@ import java.time.Duration;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.yunxi.mcp.baiduasr.BaiduAsrConfig;
+import io.yunxi.mcp.common.handler.ToolHandler;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 百度语音识别工具

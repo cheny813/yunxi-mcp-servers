@@ -1,32 +1,22 @@
 package io.yunxi.mcp.pdf;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
+import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
+import org.apache.pdfbox.text.PDFTextStripper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import io.yunxi.mcp.common.handler.ToolHandler;
 import io.yunxi.mcp.common.util.ToolResult;
 import lombok.extern.slf4j.Slf4j;
-import io.yunxi.mcp.common.util.ToolResult;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import io.yunxi.mcp.common.util.ToolResult;
-import org.apache.pdfbox.pdmodel.PDPage;
-import io.yunxi.mcp.common.util.ToolResult;
-import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
-import io.yunxi.mcp.common.util.ToolResult;
-import org.apache.pdfbox.pdmodel.encryption.StandardDecryptionMaterial;
-import io.yunxi.mcp.common.util.ToolResult;
-import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
-import io.yunxi.mcp.common.util.ToolResult;
-import org.apache.pdfbox.text.PDFTextStripper;
-import io.yunxi.mcp.common.util.ToolResult;
-import org.springframework.beans.factory.annotation.Autowired;
-import io.yunxi.mcp.common.util.ToolResult;
-import org.springframework.stereotype.Component;
-import io.yunxi.mcp.common.util.ToolResult;
-
-import java.io.File;
-import io.yunxi.mcp.common.util.ToolResult;
-import java.io.IOException;
-import io.yunxi.mcp.common.util.ToolResult;
-import java.util.*;
-import io.yunxi.mcp.common.util.ToolResult;
 
 /**
  * PDF 处理工具

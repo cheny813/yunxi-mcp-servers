@@ -1,16 +1,14 @@
 package io.yunxi.mcp.playwright.tool;
 
-import io.yunxi.mcp.playwright.service.PlaywrightService;
-import io.yunxi.mcp.common.util.ToolResult;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.stereotype.Component;
+
 import io.yunxi.mcp.common.handler.ToolHandler;
 import io.yunxi.mcp.common.util.ToolResult;
+import io.yunxi.mcp.playwright.service.PlaywrightService;
 import lombok.extern.slf4j.Slf4j;
-import io.yunxi.mcp.common.util.ToolResult;
-import org.springframework.stereotype.Component;
-import io.yunxi.mcp.common.util.ToolResult;
-
-import java.util.*;
-import io.yunxi.mcp.common.util.ToolResult;
 
 /**
  * Playwright MCP 工具集
