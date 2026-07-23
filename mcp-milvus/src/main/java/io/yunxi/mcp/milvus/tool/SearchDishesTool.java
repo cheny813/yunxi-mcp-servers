@@ -8,7 +8,7 @@ import io.milvus.v2.service.vector.request.SearchReq;
 import io.milvus.v2.service.vector.response.SearchResp;
 import io.yunxi.mcp.common.handler.ToolHandler;
 import io.yunxi.mcp.milvus.config.MilvusClientHolder;
-import io.yunxi.mcp.milvus.embedding.EmbeddingService;
+import io.yunxi.mcp.common.embedding.EmbeddingService;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
@@ -96,17 +96,18 @@ public class SearchDishesTool implements ToolHandler {
             List<Map<String, Object>> dishes = new ArrayList<>();
             boolean fromCommon = false;
 
-            // 1. 如果有 schoolId，先搜索学校专属菜品
+            // 1. 如果有 schoolId，先搜索学校专属菜品（集合已按 school 隔离，无需 filter）
             if (schoolId != null) {
                 String collectionName = COLLECTION_PREFIX + schoolId;
                 log.info("【向量搜索】搜索学校专属菜品: {}", collectionName);
-                dishes = searchCollection(milvusClient, collectionName, queryVector, topK, schoolId);
+                dishes = searchCollection(milvusClient, collectionName, queryVector, topK, null);
             }
 
             // 2. 如果学校专属菜品不足或没有 schoolId，搜索公共菜品库
+            //    schoolId 非 null 时带过滤条件（限定同校记录），为 null 时返回全部公共菜品
             if (dishes.isEmpty()) {
-                log.info("【向量搜索】搜索公共菜品库: {}", COMMON_DISHES_COLLECTION);
-                dishes = searchCollection(milvusClient, COMMON_DISHES_COLLECTION, queryVector, topK, null);
+                log.info("【向量搜索】搜索公共菜品库: {}, schoolId={}", COMMON_DISHES_COLLECTION, schoolId);
+                dishes = searchCollection(milvusClient, COMMON_DISHES_COLLECTION, queryVector, topK, schoolId);
                 fromCommon = true;
             }
 

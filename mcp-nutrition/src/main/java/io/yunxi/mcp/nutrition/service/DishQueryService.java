@@ -6,12 +6,37 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * 菜品查询服务
+ * 菜品查询服务 —— 结构化 SQL 查询（非向量检索）。
  *
- * <p>从营养数据库（school_nutrition）查询菜品基础信息和营养成分，
- * 供 MCP 工具 {@link io.yunxi.mcp.nutrition.tool.DishSearchTool} 调用。</p>
+ * <h3>架构说明：为什么这里不用 Milvus？</h3>
+ * <p>mcp-nutrition 的搜索体系采用 <b>双通道混合架构</b>：</p>
+ * <ul>
+ *   <li><b>语义搜索通道（Milvus）</b>：
+ *       由 {@code SyncEngine} 将 MySQL 中的分类数据、营养标准等静态元数据
+ *       ETL 到 Milvus 向量库，AI Agent 通过 {@code DishSearchTool} 的
+ *       "searchDishClasses" 等语义接口进行向量相似度检索。
+ *       适合"这道菜属于哪一类""类似的营养标准有哪些"等模糊匹配场景。</li>
+ *   <li><b>结构化搜索通道（MySQL/JdbcTemplate）</b>：
+ *       本类 {@code DishQueryService} 直接对 {@code dishes} 表做 SQL 精确查询
+ *       （关键词 LIKE / 分类精确匹配 / 营养成分范围过滤）。
+ *       适合"列出所有荤菜""搜索菜名包含红烧肉的菜品"等确定性查询场景，
+ *       这些查询不需要语义理解，SQL 更高效且结果可预期。</li>
+ * </ul>
  *
- * @author yunxi-agent-platform
+ * <p>选择 MySQL 而非 Milvus 的原因：</p>
+ * <ol>
+ *   <li>菜品关键词搜索和分类过滤是精确匹配，不需要向量相似度。</li>
+ *   <li>菜品数据量通常在万级别，MySQL LIKE 查询性能完全足够。</li>
+ *   <li>省去 MySQL→Milvus 的菜品维度同步维护成本，
+ *       避免数据不一致问题。</li>
+ * </ol>
+ *
+ * <p>如需对菜品做语义搜索（如"适合老年人的低脂菜品"），
+ * 应在 sync-pipelines.yml 中新增 dishes-sync 管道将菜品 ETL 到 Milvus，
+ * 并在此服务中添加 {@code vectorSearchDishes()} 方法。</p>
+ *
+ * @see io.yunxi.mcp.nutrition.tool.DishSearchTool
+ * @see io.yunxi.mcp.nutrition.sync.SyncEngine
  */
 @Service
 public class DishQueryService {

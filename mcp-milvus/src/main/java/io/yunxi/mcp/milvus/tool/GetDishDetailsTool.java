@@ -8,7 +8,7 @@ import io.milvus.v2.service.vector.request.data.FloatVec;
 import io.milvus.v2.service.vector.response.SearchResp;
 import io.yunxi.mcp.common.handler.ToolHandler;
 import io.yunxi.mcp.milvus.config.MilvusClientHolder;
-import io.yunxi.mcp.milvus.embedding.EmbeddingService;
+import io.yunxi.mcp.common.embedding.EmbeddingService;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;

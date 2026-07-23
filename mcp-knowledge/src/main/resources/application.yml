@@ -11,6 +11,9 @@ milvus:
   port: 19530
   collection-name: knowledge_base
 
-# DashScope Embedding 配置
-dashscope:
-  api-key: ${DASHSCOPE_API_KEY:}
+# Embedding 配置（统一使用 common.embedding.provider SPI）
+embedding:
+  provider: ${EMBEDDING_PROVIDER:dashscope}
+  dashscope:
+    api-key: ${DASHSCOPE_API_KEY:}
+    model: text-embedding-v3

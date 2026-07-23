@@ -444,6 +444,26 @@ java -jar mcp-wikipedia.jar --server.port=8092
 - HTTP: `POST http://localhost:8092/mcp`
 - SSE: `GET http://localhost:8092/mcp/sse` (消息端点: `/mcp/message`)
 
+### mcp-nutrition
+
+营养配餐 MCP 服务器，支持：
+
+- `searchDishes` — 菜品的语义搜索（按关键词/分类）
+- `evaluateRecipe` — 食谱营养多维评估（基于《中国居民膳食指南》）
+- `syncData` — MySQL → Milvus 数据同步（6 条 ETL 管道，ID 级 diff 同步）
+
+**数据流**：MySQL 结构化表 → Embedding (Ollama BGE-M3) → Milvus 向量库 → MCP 工具查询。
+
+**启动命令**：
+```bash
+java -jar mcp-nutrition.jar --server.port=40602 \
+  --spring.datasource.url=jdbc:mysql://host:3306/nutrition_zhaoxian \
+  --milvus.host=localhost --milvus.port=19530
+```
+
+**端点**：
+- SSE: `GET http://localhost:40602/mcp/sse` (消息端点: `/mcp/message`)
+
 ### mcp-api-gateway
 
 HTTP API 调用 MCP 服务器（仅支持 Stdio 模式），支持：

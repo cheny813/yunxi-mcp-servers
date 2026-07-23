@@ -1,16 +1,54 @@
+# ============================================================
+#  mcp-nutrition · 营养数据 MCP 服务
+# ============================================================
+
+# ---- 服务器 ----
 server:
   port: 40602
 
+# ---- Spring ----
 spring:
   application:
     name: mcp-nutrition
+  config:
+    import:
+      - classpath:sync-pipelines.yml
+  # 唯一 MySQL 连接（sync_cursor 游标表 + 所有同步管道的 default 数据源均复用此池）
   datasource:
-    url: jdbc:mysql://localhost:3306/school_nutrition?useUnicode=true&characterEncoding=utf-8
+    url: jdbc:mysql://192.168.10.153:3306/nutrition_zhaoxian?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
     password: ${MYSQL_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
-# MCP 服务标识（注册到平台时使用）
+# ---- Embedding 向量化（本机 Ollama BGE-M3）----
+embedding:
+  provider: ollama
+  ollama:
+    base-url: http://localhost:11434
+    model: bge-m3
+    dimension: 1024
+
+# ---- Milvus 向量数据库 ----
+milvus:
+  enabled: true
+  host: ${MILVUS_HOST:localhost}
+  port: ${MILVUS_PORT:19530}
+  token: ${MILVUS_TOKEN:}
+
+# ---- 数据同步 ----
+# MySQL → Milvus 同步（管线见 sync-pipelines.yml，各字段均有合理默认值）
+# 如需访问额外数据源： sync.sources.foodsafety.jdbc-url: jdbc:mysql://...
+
+sync:
+  enabled: true                 # 是否启用同步引擎
+  auto-sync-on-startup: true    # 启动时自动执行全部管道全量同步
+  dish:
+    datasource: default                              # 数据源名称
+    collection-prefix: school_dishes_                # 集合名前缀，实际集合名 = 前缀 + 学校ID
+    query-page-size: 1000                            # 分页大小
+    cron: ${DISH_SYNC_CRON:0 0 2 * * ?}
+
+# ---- MCP 服务标识 ----
 mcp:
   server:
     name: nutrition-mcp

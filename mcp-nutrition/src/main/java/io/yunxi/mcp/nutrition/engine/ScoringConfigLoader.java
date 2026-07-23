@@ -1,0 +1,166 @@
+package io.yunxi.mcp.nutrition.engine;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.stereotype.Component;
+import org.yaml.snakeyaml.Yaml;
+
+import java.io.InputStream;
+import java.util.*;
+
+/**
+ * 评分规则配置加载器 —— 从 YAML 文件读取评分规则并存入 {@link ScoringConfig}。
+ *
+ * <p>职责分离：本类只负责配置加载与解析，不涉及评分计算逻辑。
+ * {@link ScoringEngine} 通过注入本类获取配置，实现关注点分离。</p>
+ *
+ * <p>配置路径支持 classpath:/file:/http: 前缀，默认 {@code classpath:rules/scoring-rules.yml}。</p>
+ */
+@Component
+public class ScoringConfigLoader {
+
+    private static final Logger log = LoggerFactory.getLogger(ScoringConfigLoader.class);
+
+    private final ResourceLoader resourceLoader;
+
+    @Value("${framework.scoring.config:classpath:rules/scoring-rules.yml}")
+    private String configPath;
+
+    private volatile ScoringConfig config;
+
+    public ScoringConfigLoader(ResourceLoader resourceLoader) {
+        this.resourceLoader = resourceLoader;
+    }
+
+    /**
+     * 获取评分配置（懒加载，首次访问时从 YAML 加载）。
+     */
+    public ScoringConfig getConfig() {
+        if (config == null) {
+            synchronized (this) {
+                if (config == null) {
+                    config = loadConfig();
+                }
+            }
+        }
+        return config;
+    }
+
+    /** 手动强制重新加载配置（用于热更新场景）。 */
+    public ScoringConfig reload() {
+        synchronized (this) {
+            config = loadConfig();
+            return config;
+        }
+    }
+
+    // ─── 内部实现 ──────────────────────────
+
+    private ScoringConfig loadConfig() {
+        try {
+            String resolvedPath = resolveConfigPath(configPath);
+            Resource resource = resourceLoader.getResource(resolvedPath);
+            if (!resource.exists()) {
+                log.warn("评分规则文件未找到: {}，使用内置默认值", resolvedPath);
+                return ScoringConfig.defaults();
+            }
+            Yaml yaml = new Yaml();
+            try (InputStream input = resource.getInputStream()) {
+                Map<String, Object> raw = yaml.load(input);
+                @SuppressWarnings("unchecked")
+                Map<String, Object> map = (Map<String, Object>) raw.get("scoring");
+                if (map == null) {
+                    log.warn("评分规则 YAML 缺少 'scoring' 根键，使用内置默认值");
+                    return ScoringConfig.defaults();
+                }
+                ScoringConfig cfg = parseConfig(map);
+                log.info("评分配置加载完成: {} 维度, {} 人群标准, {} 等级 (路径: {})",
+                        cfg.weights().size(), cfg.standards().size(), cfg.grades().size(), resolvedPath);
+                return cfg;
+            }
+        } catch (Exception e) {
+            log.warn("评分配置加载失败: {}，使用内置默认值", e.getMessage());
+            return ScoringConfig.defaults();
+        }
+    }
+
+    private String resolveConfigPath(String path) {
+        if (path.startsWith("classpath:")) {
+            return "classpath:" + path.substring("classpath:".length()).replaceFirst("^/*", "");
+        }
+        if (path.startsWith("file:") || path.startsWith("http:") || path.startsWith("https:")) {
+            return path;
+        }
+        return "classpath:" + path.replaceFirst("^/*", "");
+    }
+
+    @SuppressWarnings("unchecked")
+    private ScoringConfig parseConfig(Map<String, Object> config) {
+        Map<String, Double> weights = new LinkedHashMap<>();
+        Map<String, Object> w = (Map<String, Object>) config.get("weights");
+        if (w != null) w.forEach((k, v) -> weights.put(k, ((Number) v).doubleValue()));
+
+        Map<String, Double> schoolTypeTolerance = new LinkedHashMap<>();
+        List<double[]> priceTiers = new ArrayList<>();
+        Map<String, Object> tol = (Map<String, Object>) config.get("tolerances");
+        if (tol != null) {
+            Map<String, Object> schoolTol = (Map<String, Object>) tol.get("school-type");
+            if (schoolTol != null) schoolTol.forEach((k, v) -> schoolTypeTolerance.put(k, ((Number) v).doubleValue()));
+            List<List<Object>> priceTol = (List<List<Object>>) tol.get("price-tiers");
+            if (priceTol != null) {
+                for (List<Object> tier : priceTol) {
+                    priceTiers.add(new double[]{
+                            ((Number) tier.get(0)).doubleValue(),
+                            ((Number) tier.get(1)).doubleValue(),
+                            ((Number) tier.get(2)).doubleValue()
+                    });
+                }
+            }
+        }
+
+        List<NutritionStandard> standards = new ArrayList<>();
+        List<Map<String, Object>> stds = (List<Map<String, Object>>) config.get("standards");
+        if (stds != null) {
+            for (Map<String, Object> s : stds) {
+                standards.add(NutritionStandard.fromMap(s));
+            }
+        }
+
+        List<GradeThreshold> grades = new ArrayList<>();
+        Map<String, Object> g = (Map<String, Object>) config.get("grades");
+        if (g != null) g.forEach((k, v) -> grades.add(new GradeThreshold(k, ((Number) v).doubleValue())));
+        grades.sort((a, b) -> Double.compare(b.threshold, a.threshold));
+
+        return new ScoringConfig(weights, schoolTypeTolerance, priceTiers, standards, grades);
+    }
+
+    // ─── 内部类型 ──────────────────────────
+
+    public record NutritionStandard(String name, List<String> keywords,
+                                    double calorieMin, double calorieMax,
+                                    double proteinMin, double proteinMax,
+                                    double fatMin, double fatMax,
+                                    double carbsMin, double carbsMax) {
+        @SuppressWarnings("unchecked")
+        public static NutritionStandard fromMap(Map<String, Object> m) {
+            List<String> kw = m.containsKey("keywords") ? (List<String>) m.get("keywords") : List.of();
+            return new NutritionStandard(
+                    (String) m.get("crowd"), kw,
+                    getDouble(m, "calorie", 0), getDouble(m, "calorie", 1),
+                    getDouble(m, "protein", 0), getDouble(m, "protein", 1),
+                    getDouble(m, "fat", 0), getDouble(m, "fat", 1),
+                    getDouble(m, "carbs", 0), getDouble(m, "carbs", 1));
+        }
+        private static double getDouble(Map<String, Object> m, String key, int idx) {
+            Object val = m.get(key);
+            if (val instanceof List) return ((Number) ((List<?>) val).get(idx)).doubleValue();
+            if (val instanceof Number) return ((Number) val).doubleValue();
+            return 0;
+        }
+    }
+
+    public record GradeThreshold(String grade, double threshold) {}
+}

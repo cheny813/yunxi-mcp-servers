@@ -1,0 +1,301 @@
+# ============================================================
+# mcp-nutrition MySQL → Milvus 数据同步管道配置
+# ============================================================
+# 此文件定义所有 MySQL → Milvus 的 ETL 管道，供 SyncEngine 读取执行。
+# 由 SyncPipelineConfigLoader 通过 @ConfigurationProperties(prefix="sync") 绑定。
+#
+# 配置格式说明：
+#   source.sql         - 数据源 SQL（支持 incremental 增量同步）
+#   transform[].type   - 转换类型: concat(拼接模板)
+#   transform[].field  - 目标字段名（如 embedding_text）
+#   transform[].template - 模板，{字段名} 占位符从源数据行取值
+#   target.collection  - Milvus 集合名
+#   target.fields      - Milvus Schema 字段定义
+#   target.index       - 索引配置（字段 + 度量类型）
+# ============================================================
+
+sync:
+  pipelines:
+
+    # ==========================================================
+    # 1. 菜品分类同步
+    # ==========================================================
+    - name: dish-classes-sync
+      description: "菜品分类数据同步到 Milvus：支撑菜品分类的向量检索"
+      source:
+        datasource: default
+        sql: "SELECT id, name, pid AS parent_id, COALESCE(remark, '') AS description FROM dish_class WHERE deleted = 0"
+        incremental:
+          column: update_time
+          initialValue: "2024-01-01 00:00:00"
+      transform:
+        - type: concat
+          field: embedding_text
+          template: "菜谱分类 {name}"
+      target:
+        collection: dish_classes
+        collectionDescription: "菜品分类向量库"
+        primaryKey: id
+        fields:
+          - { name: id, type: Int64, primaryKey: true, description: "分类ID" }
+          - { name: name, type: VarChar, description: "分类名称" }
+          - { name: parent_id, type: Int64, description: "父分类ID" }
+          - { name: description, type: VarChar, description: "分类说明" }
+          - { name: embedding_text, type: VarChar, description: "向量化文本" }
+          - { name: embedding, type: FloatVector, dimension: 1024, description: "分类语义向量" }
+        index:
+          field: embedding
+          metricType: COSINE
+
+    # ==========================================================
+    # 2. 食材分类同步
+    # ==========================================================
+    - name: ingredient-classes-sync
+      description: "食材分类数据同步：主食/副食/调料等食材分类体系"
+      source:
+        datasource: default
+        sql: >
+          SELECT DISTINCT fic.id, COALESCE(fimc.name, fisc.name) AS name,
+                 COALESCE(fimc.id, fisc.id) AS parent_id,
+                 COALESCE(fisc.name, '') AS sub_class_name,
+                 COALESCE(fimc.name, '') AS main_class_name
+          FROM food_ingredient_class fic
+          LEFT JOIN food_ingredient_main_class fimc ON fic.main_id = fimc.id
+          LEFT JOIN food_ingredient_sub_class fisc ON fic.sub_id = fisc.id
+          WHERE (fimc.deleted = 0 OR fimc.deleted IS NULL)
+            AND (fisc.deleted = 0 OR fisc.deleted IS NULL)
+      transform:
+        - type: concat
+          field: embedding_text
+          template: "食材分类 {name}"
+      target:
+        collection: ingredient_classes
+        collectionDescription: "食材分类向量库"
+        primaryKey: id
+        fields:
+          - { name: id, type: Int64, primaryKey: true, description: "食材分类ID" }
+          - { name: name, type: VarChar, description: "食材分类名称" }
+          - { name: parent_id, type: Int64, description: "父分类ID" }
+          - { name: main_class_name, type: VarChar, description: "主分类名称" }
+          - { name: sub_class_name, type: VarChar, description: "子分类名称" }
+          - { name: embedding_text, type: VarChar, description: "向量化文本" }
+          - { name: embedding, type: FloatVector, dimension: 1024, description: "分类语义向量" }
+        index:
+          field: embedding
+          metricType: COSINE
+
+    # ==========================================================
+    # 3. 营养标准同步
+    # ==========================================================
+    - name: nutrition-standards-sync
+      description: "营养标准数据同步：膳食营养素参考摄入量标准"
+      source:
+        datasource: default
+        sql: "SELECT id, code, name, age_group AS age_range, region AS standard_name FROM nutrient_standard WHERE deleted = 0"
+      transform:
+        - type: concat
+          field: embedding_text
+          template: "营养标准 {name} 年龄段 {age_range} 地区 {standard_name}"
+      target:
+        collection: nutrition_standards
+        collectionDescription: "营养标准向量库"
+        primaryKey: id
+        fields:
+          - { name: id, type: Int64, primaryKey: true, description: "标准ID" }
+          - { name: code, type: VarChar, description: "标准编码" }
+          - { name: name, type: VarChar, description: "标准名称" }
+          - { name: age_range, type: VarChar, description: "适用年龄段" }
+          - { name: standard_name, type: VarChar, description: "地区标准名" }
+          - { name: embedding_text, type: VarChar, description: "向量化文本" }
+          - { name: embedding, type: FloatVector, dimension: 1024, description: "标准语义向量" }
+        index:
+          field: embedding
+          metricType: COSINE
+
+    # ==========================================================
+    # 4. 营养标准明细同步
+    # ==========================================================
+    - name: nutrient-standard-details-sync
+      description: "营养标准明细数据同步：各标准下每种营养素的推荐摄入量"
+      source:
+        datasource: default
+        sql: >
+          SELECT DISTINCT dc.id, ns.id AS ns_id, ns.code AS ns_code, ns.name AS ns_name,
+                 ns.age_group, ns.region,
+                 COALESCE(nsc.id, 0) AS nsc_id, COALESCE(nsc.name, '') AS nsc_name,
+                 COALESCE(n.id, 0) AS nutrient_id, COALESCE(n.name, '') AS nutrient_name,
+                 dc.all_recommend_qty,
+                 dc.intake_suitable_suggestion, dc.intake_low_suggestion, dc.intake_high_suggestion
+          FROM nutrient_standard_dcn dc
+          LEFT JOIN nutrient_standard ns ON dc.ns_id = ns.id
+          LEFT JOIN nutritional_standard_dining_crowd nsc ON dc.nsc_id = nsc.id
+          LEFT JOIN nutrient n ON dc.n_id = n.id
+          WHERE ns.deleted = 0
+      transform:
+        - type: concat
+          field: embedding_text
+          template: "营养标准 {ns_name} {nsc_name} 营养素 {nutrient_name}"
+      target:
+        collection: nutrient_standard_details
+        collectionDescription: "营养标准明细向量库"
+        primaryKey: id
+        fields:
+          - { name: id, type: Int64, primaryKey: true, description: "明细ID" }
+          - { name: ns_id, type: Int64, description: "营养标准ID" }
+          - { name: ns_code, type: VarChar, description: "标准编码" }
+          - { name: ns_name, type: VarChar, description: "标准名称" }
+          - { name: age_group, type: VarChar, description: "适用年龄组" }
+          - { name: region, type: VarChar, description: "适用地区" }
+          - { name: nsc_id, type: Int64, description: "就餐人群ID" }
+          - { name: nsc_name, type: VarChar, description: "就餐人群名称" }
+          - { name: nutrient_id, type: Int64, description: "营养素ID" }
+          - { name: nutrient_name, type: VarChar, description: "营养素名称" }
+          - { name: all_recommend_qty, type: Double, description: "推荐摄入量" }
+          - { name: embedding_text, type: VarChar, description: "向量化文本" }
+          - { name: embedding, type: FloatVector, dimension: 1024, description: "明细语义向量" }
+        index:
+          field: embedding
+          metricType: COSINE
+
+    # ==========================================================
+    # 5. 食材营养素同步
+    # ==========================================================
+    - name: ingredient-nutrients-sync
+      description: "食材营养成分数据同步：每种食材的蛋白质/脂肪/碳水等含量"
+      source:
+        datasource: default
+        sql: >
+          SELECT fi.id, fi.name, fi.main_class_id, fi.sub_class_id,
+                 COALESCE(GROUP_CONCAT(CONCAT(n.name, ':', fin.nutrient_content, n.unit) SEPARATOR ', '), '') AS nutrients
+          FROM food_ingredient fi
+          LEFT JOIN food_ingredient_nutrient fin ON fi.id = fin.fi_id
+          LEFT JOIN nutrient n ON fin.nutrient_id = n.id
+          WHERE fi.deleted = 0
+          GROUP BY fi.id, fi.name, fi.main_class_id, fi.sub_class_id
+      transform:
+        - type: concat
+          field: embedding_text
+          template: "食材 {name} 营养成分 {nutrients}"
+      target:
+        collection: ingredient_nutrients
+        collectionDescription: "食材营养成分向量库"
+        primaryKey: id
+        fields:
+          - { name: id, type: Int64, primaryKey: true, description: "食材ID" }
+          - { name: name, type: VarChar, description: "食材名称" }
+          - { name: main_class_id, type: Int64, description: "主分类ID" }
+          - { name: sub_class_id, type: Int64, description: "子分类ID" }
+          - { name: nutrients, type: VarChar, maxLength: 5000, description: "营养成分(名称:含量+单位)" }
+          - { name: embedding_text, type: VarChar, maxLength: 5000, description: "向量化文本" }
+          - { name: embedding, type: FloatVector, dimension: 1024, description: "营养成分语义向量" }
+        index:
+          field: embedding
+          metricType: COSINE
+
+    # ==========================================================
+    # 6. 评分指标同步
+    # ==========================================================
+    - name: score-index-sync
+      description: "评分指标同步：菜品营养评分指标类别和明细"
+      source:
+        datasource: default
+        sql: >
+          SELECT sid.id, COALESCE(sic.id, 0) AS class_id,
+                 COALESCE(sic.index_class, '') AS index_class,
+                 COALESCE(sic.index_ratio, 0) AS class_weight,
+                 COALESCE(sic.dimension, '') AS dimension,
+                 sid.index_name AS detail_name, sid.index_ratio AS detail_weight
+          FROM cook_book_score_index_detail sid
+          LEFT JOIN cook_book_score_index_class sic ON sid.index_class_id = sic.id
+          ORDER BY sid.id
+      transform:
+        - type: concat
+          field: embedding_text
+          template: "评分指标 {index_class} - {detail_name} 权重{detail_weight}"
+      target:
+        collection: cook_book_score_index
+        collectionDescription: "评分指标向量库"
+        primaryKey: id
+        fields:
+          - { name: id, type: Int64, primaryKey: true, description: "评分指标明细ID" }
+          - { name: class_id, type: Int64, description: "所属指标类别ID" }
+          - { name: index_class, type: VarChar, description: "指标类别名称" }
+          - { name: class_weight, type: Double, description: "类别权重" }
+          - { name: dimension, type: VarChar, description: "维度(周/日/餐)" }
+          - { name: detail_name, type: VarChar, description: "指标明细名称" }
+          - { name: detail_weight, type: Double, description: "明细权重" }
+          - { name: embedding_text, type: VarChar, description: "向量化文本" }
+          - { name: embedding, type: FloatVector, dimension: 1024, description: "评分指标语义向量" }
+        index:
+          field: embedding
+          metricType: COSINE
+
+    # ==========================================================
+    # 7. 公共菜品库同步 → school_common_dishes
+    # ==========================================================
+    # 此管道是 SearchDishesTool / GetDishDetailsTool 的 fallback 数据源。
+    # 无学校归属用户发起食谱时，直接查询此集合；有学校归属用户如校专属
+    # 菜品不够，也会 fallback 到这里。
+    - name: dish-library-sync
+      description: "公共菜品库同步到 Milvus：支撑无学校归属用户及跨校菜品的语义检索"
+      source:
+        datasource: default
+        # 仅同步公共菜品（school_id IS NULL）；有学校归属的菜品由 SchoolDishSyncRunner
+        # 写入 school_dishes_{schoolId}。两路互不重叠，避免重复写入与 school_dishes_0 空集合。
+        sql: "SELECT id, name, type, COALESCE(school_id, 0) AS school_id, update_time FROM dish_library WHERE school_id IS NULL AND deleted = 0"
+        incremental:
+          column: update_time
+          initialValue: "2024-01-01 00:00:00"
+      transform:
+        - type: concat
+          field: embedding_text
+          template: "菜品 {name} 类型 {type}"
+      target:
+        collection: school_common_dishes
+        collectionDescription: "公共菜品向量库，供 SearchDishesTool / GetDishDetailsTool fallback 查询"
+        primaryKey: id
+        fields:
+          - { name: id, type: Int64, primaryKey: true, description: "菜品ID" }
+          - { name: name, type: VarChar, maxLength: 256, description: "菜品名称" }
+          - { name: type, type: VarChar, maxLength: 128, description: "菜品类型" }
+          - { name: ingredients, type: VarChar, maxLength: 4096, description: "食材名称（通过 batch_query_dish_ingredients 获取详情）" }
+          - { name: ingredient_ids, type: VarChar, maxLength: 2048, description: "食材ID列表" }
+          - { name: nutrients, type: VarChar, maxLength: 4096, description: "营养成分（通过 batch_query_dish_ingredients 获取详情）" }
+          - { name: school_id, type: Int64, description: "学校ID（0=公共菜品）" }
+          - { name: update_time, type: VarChar, maxLength: 64, description: "更新时间" }
+          - { name: embedding_text, type: VarChar, maxLength: 4096, description: "向量化文本" }
+          - { name: embedding, type: FloatVector, dimension: 1024, description: "菜品语义向量" }
+        index:
+          field: embedding
+          metricType: COSINE
+
+    # ==========================================================
+    # 8. 食材主数据同步 → food_ingredient
+    # ==========================================================
+    - name: food-ingredient-sync
+      description: "食材主数据同步到 Milvus：支撑按食材名/分类的语义检索"
+      source:
+        datasource: default
+        sql: "SELECT fi.id, fi.name, fi.update_time, COALESCE(fimc.name,'') AS main_class, COALESCE(fisc.name,'') AS sub_class FROM food_ingredient fi LEFT JOIN food_ingredient_main_class fimc ON fi.main_class_id = fimc.id LEFT JOIN food_ingredient_sub_class fisc ON fi.sub_class_id = fisc.id WHERE fi.deleted = 0"
+        incremental:
+          column: fi.update_time
+          initialValue: "2024-01-01 00:00:00"
+      transform:
+        - type: concat
+          field: embedding_text
+          template: "食材 {name} 主分类 {main_class} 子分类 {sub_class}"
+      target:
+        collection: food_ingredient
+        collectionDescription: "食材主数据向量库，支持按名称、分类语义检索"
+        primaryKey: id
+        fields:
+          - { name: id, type: Int64, primaryKey: true, description: "食材ID" }
+          - { name: name, type: VarChar, maxLength: 256, description: "食材名称" }
+          - { name: main_class, type: VarChar, maxLength: 128, description: "主分类名称" }
+          - { name: sub_class, type: VarChar, maxLength: 128, description: "子分类名称" }
+          - { name: update_time, type: VarChar, maxLength: 64, description: "更新时间" }
+          - { name: embedding_text, type: VarChar, maxLength: 4096, description: "向量化文本" }
+          - { name: embedding, type: FloatVector, dimension: 1024, description: "食材语义向量" }
+        index:
+          field: embedding
+          metricType: COSINE

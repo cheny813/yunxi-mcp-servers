@@ -1,36 +1,52 @@
 package io.yunxi.mcp.nutrition.tool;
 
 import io.yunxi.mcp.common.handler.ToolHandler;
+import io.yunxi.mcp.nutrition.engine.ScoringEngine;
+import io.yunxi.mcp.nutrition.engine.ScoringEngine.ScoringRequest;
+import io.yunxi.mcp.nutrition.engine.ScoringEngine.ScoringResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 营养食谱评分工具 —— ScoringEngine 的 MCP Tool 适配层（v2.0 ToolHandler 接口）。
+ *
+ * <p>本类仅做参数映射和结果格式化，评分逻辑全部委托
+ * {@link ScoringEngine}（YAML 驱动，可热更新），
+ * 确保所有评分路径共享同一套规则。</p>
+ *
+ * <h3>架构</h3>
+ * <pre>
+ *   AI Agent → MCP Tool → RecipeEvaluateTool (thin adapter)
+ *                           │
+ *                           └→ ScoringEngine (single source of truth)
+ *                                └→ ScoringConfigLoader → scoring-rules.yml
+ * </pre>
+ */
 @Component
 public class RecipeEvaluateTool implements ToolHandler {
 
-    private static final Map<String, Double> MEAL_RATIOS = Map.of(
-            "早餐", 0.30, "早点", 0.06,
-            "午餐", 0.38, "午点", 0.06,
-            "晚餐", 0.30, "晚点", 0.06);
+    private static final Logger log = LoggerFactory.getLogger(RecipeEvaluateTool.class);
 
-    private static final Map<String, Double> TOLERANCE = Map.of(
-            "优质城市", 1.10, "普通城市", 1.20, "农村", 1.35);
+    private final ScoringEngine scoringEngine;
 
-    private static final Map<String, double[]> STANDARDS = Map.of(
-            "学龄前", new double[]{1000, 1200, 30, 35, 33, 40, 150, 180},
-            "小学低年级", new double[]{1200, 1500, 35, 45, 40, 50, 180, 220},
-            "小学高年级", new double[]{1500, 1800, 45, 55, 50, 60, 220, 270},
-            "初中生", new double[]{2000, 2400, 55, 70, 60, 75, 300, 360},
-            "高中生", new double[]{2200, 2600, 65, 80, 70, 85, 330, 400},
-            "教师", new double[]{1800, 2200, 50, 65, 50, 65, 250, 320});
+    public RecipeEvaluateTool(ScoringEngine scoringEngine) {
+        this.scoringEngine = scoringEngine;
+    }
 
     @Override
-    public String getName() { return "evaluateRecipe"; }
+    public String getName() {
+        return "evaluateRecipe";
+    }
 
     @Override
     public String getDescription() {
-        return "评估食谱营养评分，基于《中国居民膳食指南》标准，从热量、蛋白质、脂肪、碳水、多样性五个维度加权评分";
+        return "评估学生营养餐食谱的营养均衡度和食材多样性，返回评分等级和改进建议。"
+                + "参数包括热量(kcal)、蛋白质(g)、脂肪(g)、碳水化合物(g)、人群类型(crowdType)、"
+                + "学校类型(schoolType)、餐费价格(mealPrice)，可选参数菜品数(dishCount)、餐次列表(mealTypes)、天数(dayCount)";
     }
 
     @Override
@@ -38,97 +54,91 @@ public class RecipeEvaluateTool implements ToolHandler {
         return Map.of(
                 "type", "object",
                 "properties", Map.of(
-                        "crowdType", Map.of("type", "string", "description", "人群类型：学龄前/小学低年级/小学高年级/初中生/高中生/教师"),
-                        "calorie", Map.of("type", "number", "description", "食谱总热量(kcal)"),
-                        "protein", Map.of("type", "number", "description", "总蛋白质(g)"),
-                        "fat", Map.of("type", "number", "description", "总脂肪(g)"),
-                        "carbs", Map.of("type", "number", "description", "总碳水化合物(g)"),
-                        "dishCount", Map.of("type", "number", "description", "菜品数量"),
-                        "mealTypes", Map.of("type", "array", "description", "餐次列表"),
-                        "schoolType", Map.of("type", "string", "description", "学校类型：优质城市/普通城市/农村"),
-                        "dayCount", Map.of("type", "number", "description", "天数，默认1")),
-                "required", List.of("crowdType", "calorie", "protein", "fat", "carbs", "dishCount", "mealTypes"));
+                        "calorie", Map.of("type", "number", "description", "实际摄入热量（kcal/人/餐）"),
+                        "protein", Map.of("type", "number", "description", "实际摄入蛋白质（g/人/餐）"),
+                        "fat", Map.of("type", "number", "description", "实际摄入脂肪（g/人/餐）"),
+                        "carbs", Map.of("type", "number", "description", "实际摄入碳水化合物（g/人/餐）"),
+                        "crowdType", Map.of("type", "string", "description", "人群类型（学龄前/小学低年级/小学高年级/初中生/高中生/教师）"),
+                        "schoolType", Map.of("type", "string", "description", "学校类型（优质城市/普通城市/农村）"),
+                        "mealPrice", Map.of("type", "number", "description", "餐费价格（元）"),
+                        "dishCount", Map.of("type", "integer", "description", "当日菜品总数（可选）"),
+                        "mealTypes", Map.of("type", "string", "description", "餐次列表，逗号分隔（可选，如：早餐,午餐,晚餐）"),
+                        "dayCount", Map.of("type", "integer", "description", "评估天数（可选，默认1）")),
+                "required", List.of("calorie", "protein", "fat", "carbs", "crowdType", "schoolType", "mealPrice"));
     }
 
     @Override
-    public String execute(Map<String, Object> arguments) {
-        try {
-            String crowdType = (String) arguments.get("crowdType");
-            double calorie = ((Number) arguments.get("calorie")).doubleValue();
-            double protein = ((Number) arguments.get("protein")).doubleValue();
-            double fat = ((Number) arguments.get("fat")).doubleValue();
-            double carbs = ((Number) arguments.get("carbs")).doubleValue();
-            int dishCount = ((Number) arguments.get("dishCount")).intValue();
-            @SuppressWarnings("unchecked")
-            List<String> mealTypes = (List<String>) arguments.get("mealTypes");
-            String schoolType = (String) arguments.getOrDefault("schoolType", "普通城市");
-            int dayCount = arguments.containsKey("dayCount") ? ((Number) arguments.get("dayCount")).intValue() : 1;
+    public String execute(Map<String, Object> args) {
+        ScoringRequest request = ScoringRequest.builder()
+                .crowdType(getString(args, "crowdType"))
+                .calorie(getDouble(args, "calorie"))
+                .protein(getDouble(args, "protein"))
+                .fat(getDouble(args, "fat"))
+                .carbs(getDouble(args, "carbs"))
+                .schoolType(getString(args, "schoolType"))
+                .mealPrice(args.containsKey("mealPrice") ? getDouble(args, "mealPrice") : null)
+                .dishCount(args.containsKey("dishCount") ? getInt(args, "dishCount") : 0)
+                .mealTypes(args.containsKey("mealTypes")
+                        ? List.of(getString(args, "mealTypes").split(","))
+                        : List.of("午餐"))
+                .dayCount(args.containsKey("dayCount") ? getInt(args, "dayCount") : 1)
+                .build();
 
-            double[] std = findStandard(crowdType);
-            if (std == null) {
-                throw new RuntimeException("未知的人群类型: " + crowdType);
-            }
+        ScoringResult result = scoringEngine.evaluate(request);
+        String formatted = formatResult(result);
+        log.info("RecipeEvaluateTool: crowdType={} → grade={} score={}",
+                request.getCrowdType(), result.getGrade(), result.getTotalScore());
+        return formatted;
+    }
 
-            double tolerance = TOLERANCE.getOrDefault(schoolType, 1.20);
-            double mealRatio = Math.min(1.0, mealTypes.stream()
-                    .mapToDouble(m -> MEAL_RATIOS.getOrDefault(m, 0.15)).sum());
-
-            double calorieScore = calcScore(calorie, std[0] * dayCount * mealRatio, std[1] * dayCount * mealRatio, tolerance);
-            double proteinScore = calcScore(protein, std[2] * dayCount * mealRatio, std[3] * dayCount * mealRatio, tolerance);
-            double fatScore = calcScore(fat, std[4] * dayCount * mealRatio * 0.8, std[5] * dayCount * mealRatio * 1.2, tolerance);
-            double carbsScore = calcScore(carbs, std[6] * dayCount * mealRatio, std[7] * dayCount * mealRatio, tolerance);
-            double varietyScore = calcVarietyScore(dishCount, Math.max(2, mealTypes.size() * dayCount), tolerance);
-
-            double total = calorieScore * 0.30 + proteinScore * 0.25 + fatScore * 0.15
-                    + carbsScore * 0.15 + varietyScore * 0.15;
-            String grade = total >= 90 ? "A" : total >= 80 ? "B" : total >= 70 ? "C" : total >= 60 ? "D" : "F";
-
-            return String.format("""
-                    食谱营养评分结果：
-                    总分：%.1f（等级 %s）
-                    
-                    维度得分：
-                    - 热量：%.1f/100（权重30%%）
-                    - 蛋白质：%.1f/100（权重25%%）
-                    - 脂肪：%.1f/100（权重15%%）
-                    - 碳水化合物：%.1f/100（权重15%%）
-                    - 食材多样性：%.1f/100（权重15%%）
-                    
-                    宽松度：%.2f（学校类型：%s）
-                    餐次占比：%.0f%%
-                    """, total, grade,
-                    calorieScore, proteinScore, fatScore, carbsScore, varietyScore,
-                    tolerance, schoolType, mealRatio * 100);
-
-        } catch (Exception e) {
-            throw new RuntimeException("评分计算失败: " + e.getMessage());
+    private String formatResult(ScoringResult r) {
+        if (r.getError() != null) {
+            return "评分失败: " + r.getError();
         }
+        var dims = r.getDimensions();
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("总分: %.1f / 100  等级: %s\n", r.getTotalScore(), r.getGrade()));
+        sb.append(String.format("目标分: %d（%s学校，宽松系数=%.2f）\n\n",
+                r.getTargetScore(),
+                "优质城市".equals(getString(Map.of(), "")) ? "优质城市" : "参考",
+                r.getTolerance()));
+        sb.append("维度得分:\n");
+        formatDim(sb, "能量", dims.get("calorie"), 0.30);
+        formatDim(sb, "蛋白质", dims.get("protein"), 0.25);
+        formatDim(sb, "脂肪", dims.get("fat"), 0.15);
+        formatDim(sb, "碳水化合物", dims.get("carbs"), 0.15);
+        formatDim(sb, "食材多样性", dims.get("variety"), 0.15);
+        return sb.toString();
     }
 
-    private double calcScore(double value, double min, double max, double tolerance) {
-        double adjMin = min / tolerance;
-        double adjMax = max * tolerance;
-        if (value >= adjMin && value <= adjMax) return 100;
-        if (value < adjMin) return Math.max(0, 100 - (adjMin - value) / adjMin * 100);
-        return Math.max(0, 100 - (value - adjMax) / adjMax * 100);
+    private void formatDim(StringBuilder sb, String name,
+                           ScoringEngine.DimensionScore dim, double weight) {
+        if (dim == null) {
+            sb.append(String.format("  %s: 无数据\n", name));
+            return;
+        }
+        sb.append(String.format("  %s: %.1f / %.0f (%s, 实际=%.1f, 区间[%.1f-%.1f])\n",
+                name, dim.score(), weight * 100,
+                dim.score() >= 80 ? "达标" : dim.score() >= 60 ? "接近" : "需改进",
+                dim.actualValue(), dim.rangeMin(), dim.rangeMax()));
     }
 
-    private double calcVarietyScore(int dishCount, double minDishCount, double tolerance) {
-        double adjustedMin = minDishCount / tolerance;
-        if (dishCount >= adjustedMin * 2) return 100;
-        if (dishCount >= adjustedMin) return 80 + (dishCount - adjustedMin) / adjustedMin * 20;
-        return Math.max(0, dishCount / adjustedMin * 80);
+    private double getDouble(Map<String, Object> m, String k) {
+        Object v = m.get(k);
+        if (v instanceof Number n) return n.doubleValue();
+        if (v == null) return 0;
+        try { return Double.parseDouble(v.toString()); } catch (NumberFormatException e) { return 0; }
     }
 
-    private double[] findStandard(String crowdType) {
-        if (crowdType == null) return null;
-        String t = crowdType.toLowerCase();
-        if (t.contains("学龄前") || t.contains("3-6")) return STANDARDS.get("学龄前");
-        if (t.contains("小学低") || t.contains("1-3")) return STANDARDS.get("小学低年级");
-        if (t.contains("小学高") || t.contains("4-6")) return STANDARDS.get("小学高年级");
-        if (t.contains("初中") || t.contains("13-15")) return STANDARDS.get("初中生");
-        if (t.contains("高中") || t.contains("16-18")) return STANDARDS.get("高中生");
-        if (t.contains("教师")) return STANDARDS.get("教师");
-        return STANDARDS.get("教师");
+    private int getInt(Map<String, Object> m, String k) {
+        Object v = m.get(k);
+        if (v instanceof Number n) return n.intValue();
+        if (v == null) return 0;
+        try { return Integer.parseInt(v.toString()); } catch (NumberFormatException e) { return 0; }
+    }
+
+    private String getString(Map<String, Object> m, String k) {
+        Object v = m.get(k);
+        return v != null ? v.toString() : "";
     }
 }

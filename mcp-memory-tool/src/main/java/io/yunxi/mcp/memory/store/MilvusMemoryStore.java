@@ -13,7 +13,7 @@ import io.milvus.v2.service.vector.request.SearchReq;
 import io.milvus.v2.service.vector.request.data.FloatVec;
 import io.milvus.v2.service.vector.response.SearchResp;
 import io.yunxi.mcp.memory.config.MilvusProperties;
-import io.yunxi.mcp.memory.embedding.EmbeddingService;
+import io.yunxi.mcp.common.embedding.EmbeddingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

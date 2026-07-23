@@ -9,7 +9,7 @@ import io.milvus.v2.service.vector.request.SearchReq;
 import io.milvus.v2.service.vector.request.data.FloatVec;
 import io.milvus.v2.service.vector.response.SearchResp;
 import io.yunxi.mcp.knowledge.config.MilvusClientConfig;
-import io.yunxi.mcp.knowledge.embedding.EmbeddingService;
+import io.yunxi.mcp.common.embedding.EmbeddingService;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
