@@ -3,7 +3,6 @@ package io.yunxi.mcp.milvus.tool;
 import org.springframework.stereotype.Component;
 
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.milvus.config.MilvusClientHolder;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
@@ -13,6 +12,7 @@ import java.util.*;
  * <p>
  * 根据营养标准对食谱进行评分，支持按实际餐次占比动态计算推荐量。
  * 支持根据学校类型和餐费标准灵活调整评分宽松度。
+ * 纯计算工具，不依赖 Milvus 客户端。
  * </p>
  *
  * <p>评分原则：
@@ -27,8 +27,6 @@ import java.util.*;
 @Slf4j
 @Component
 public class EvaluateRecipeTool implements ToolHandler {
-
-    private final MilvusClientHolder clientHolder;
 
     // 各营养素权重
     private static final double CALORIE_WEIGHT = 0.30;
@@ -74,10 +72,6 @@ public class EvaluateRecipeTool implements ToolHandler {
             {8, 12, 1.10},     // 8-12元，放宽10%
             {12, Double.MAX_VALUE, 1.0}  // 12元以上，标准评分
     };
-
-    public EvaluateRecipeTool(MilvusClientHolder clientHolder) {
-        this.clientHolder = clientHolder;
-    }
 
     @Override
     public String getName() {

@@ -8,7 +8,7 @@ spring:
   # 默认库（nutrition）：供 DistrictService 注入 Spring DataSource Bean，
   # 同时由 DatabaseController 读取并注册为 id="default"。
   datasource:
-    url: jdbc:mysql://${DB_HOST:192.168.10.153}:${DB_PORT:3306}/${DB_NAME:nutrition_zhaoxian}?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://${DB_HOST:192.168.10.114}:${DB_PORT:3306}/${DB_NAME:nutrition}?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -31,12 +31,12 @@ mcp-databases:
   # finance:
   #   display-name: 经费数据库
   #   jdbc:
-  #     url: jdbc:mysql://${FINANCE_DB_HOST:192.168.10.153}:${FINANCE_DB_PORT:3306}/${FINANCE_DB_NAME:finance_db}?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+  #     url: jdbc:mysql://${FINANCE_DB_HOST:192.168.10.114}:${FINANCE_DB_PORT:3306}/${FINANCE_DB_NAME:finance_db}?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
   #     username: ${FINANCE_DB_USERNAME:root}
   #     password: ${FINANCE_DB_PASSWORD:root}
   foodsafety:
     display-name: 食安数据库
     jdbc:
-      url: jdbc:mysql://${FOODSAFETY_DB_HOST:192.168.10.153}:${FOODSAFETY_DB_PORT:3306}/${FOODSAFETY_DB_NAME:cloud}?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      url: jdbc:mysql://${FOODSAFETY_DB_HOST:192.168.10.114}:${FOODSAFETY_DB_PORT:3306}/${FOODSAFETY_DB_NAME:cloud}?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
       username: ${FOODSAFETY_DB_USERNAME:root}
       password: ${FOODSAFETY_DB_PASSWORD:root}

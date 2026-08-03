@@ -5,11 +5,18 @@ spring:
   application:
     name: mcp-knowledge
 
-# Milvus 配置
+# Milvus 配置（统一使用 mcp-common 的 MilvusConfig，prefix=milvus）
 milvus:
-  host: localhost
-  port: 19530
-  collection-name: knowledge_base
+  enabled: true
+  host: ${MILVUS_HOST:localhost}
+  port: ${MILVUS_PORT:19530}
+  database: ${MILVUS_DATABASE:default}
+  username: ${MILVUS_USERNAME:root}
+  password: ${MILVUS_PASSWORD:Milvus}
+  token: ${MILVUS_TOKEN:}
+  connect-timeout: 5
+  query-timeout: 30
+  collectionName: knowledge_base
 
 # Embedding 配置（统一使用 common.embedding.provider SPI）
 embedding:

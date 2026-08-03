@@ -3,7 +3,6 @@ package io.yunxi.mcp.milvus.tool;
 import org.springframework.stereotype.Component;
 
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.milvus.config.MilvusClientHolder;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
@@ -11,18 +10,13 @@ import java.util.*;
 /**
  * 搜索食材工具
  * <p>
- * 通过 Milvus 向量搜索食材库中的食材。
+ * 提示型工具：当前食材搜索依赖 database MCP 的 food_ingredient 表，
+ * 本工具返回引导信息，不依赖 Milvus 客户端。
  * </p>
  */
 @Slf4j
 @Component
 public class SearchIngredientsTool implements ToolHandler {
-
-    private final MilvusClientHolder clientHolder;
-
-    public SearchIngredientsTool(MilvusClientHolder clientHolder) {
-        this.clientHolder = clientHolder;
-    }
 
     @Override
     public String getName() {

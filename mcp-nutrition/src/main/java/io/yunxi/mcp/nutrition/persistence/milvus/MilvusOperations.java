@@ -52,7 +52,7 @@ import io.yunxi.mcp.common.milvus.MilvusConfig;
  * @version 2.0.0
  */
 @Service
-@ConditionalOnProperty(name = "milvus.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "milvus.enabled", havingValue = "true", matchIfMissing = false)
 public class MilvusOperations {
 
     private static final Logger log = LoggerFactory.getLogger(MilvusOperations.class);

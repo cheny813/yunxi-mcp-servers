@@ -7,9 +7,9 @@ import io.milvus.v2.service.vector.request.data.FloatVec;
 import io.milvus.v2.service.vector.request.SearchReq;
 import io.milvus.v2.service.vector.response.SearchResp;
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.milvus.config.MilvusClientHolder;
 import io.yunxi.mcp.common.embedding.EmbeddingService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 
 import java.util.*;
 
@@ -27,14 +27,14 @@ import java.util.*;
 @Component
 public class SearchDishesTool implements ToolHandler {
 
-    private final MilvusClientHolder clientHolder;
+    private final ObjectProvider<MilvusClientV2> milvusClientProvider;
     private final EmbeddingService embeddingService;
 
     private static final String COLLECTION_PREFIX = "school_dishes_";
     private static final String COMMON_DISHES_COLLECTION = "school_common_dishes";
 
-    public SearchDishesTool(MilvusClientHolder clientHolder, EmbeddingService embeddingService) {
-        this.clientHolder = clientHolder;
+    public SearchDishesTool(ObjectProvider<MilvusClientV2> milvusClientProvider, EmbeddingService embeddingService) {
+        this.milvusClientProvider = milvusClientProvider;
         this.embeddingService = embeddingService;
     }
 
@@ -79,7 +79,7 @@ public class SearchDishesTool implements ToolHandler {
 
         log.info("【向量搜索】schoolId={}, query={}, topK={}", schoolId, query, topK);
 
-        MilvusClientV2 milvusClient = clientHolder.getClient();
+        MilvusClientV2 milvusClient = milvusClientProvider.getIfAvailable();
         if (milvusClient == null) {
             log.warn("【向量搜索】Milvus 客户端不可用，请稍后重试");
             throw new RuntimeException("Milvus 服务暂不可用，正在尝试重连，请稍后重试");

@@ -30,7 +30,7 @@ import java.util.List;
  * @version 2.2.0
  */
 @Component
-@ConditionalOnProperty(name = "milvus.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "milvus.enabled", havingValue = "true", matchIfMissing = false)
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class SyncCollectionInitializer {
 

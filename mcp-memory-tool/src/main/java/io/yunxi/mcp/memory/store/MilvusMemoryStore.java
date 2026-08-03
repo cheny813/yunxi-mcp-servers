@@ -12,9 +12,10 @@ import io.milvus.v2.service.vector.request.InsertReq;
 import io.milvus.v2.service.vector.request.SearchReq;
 import io.milvus.v2.service.vector.request.data.FloatVec;
 import io.milvus.v2.service.vector.response.SearchResp;
-import io.yunxi.mcp.memory.config.MilvusProperties;
 import io.yunxi.mcp.common.embedding.EmbeddingService;
+import io.yunxi.mcp.common.milvus.MilvusConfig;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -48,7 +49,7 @@ import java.util.*;
  *   <li>target - 目标存储（memory/user）</li>
  *   <li>category - 记忆分类</li>
  *   <li>content - 记忆内容（文本）</li>
- *   <li>embedding - 向量嵌入（1024维）</li>
+ *   <li>embedding - 向量嵌入（由嵌入服务决定维度）</li>
  *   <li>timestamp - 时间戳</li>
  * </ul>
  * <p>
@@ -60,7 +61,8 @@ import java.util.*;
  *   <li>nlist：256</li>
  * </ul>
  * <p>
- * 激活条件：通过配置 {@code memory.store.type=milvus} 启用。
+ * 激活条件：通过配置 {@code memory.store.type=milvus} 且 {@code milvus.enabled=true} 启用。
+ * 客户端由公共 mcp-common 的 MilvusClientConfig 统一提供。
  * </p>
  *
  * @author yunxi-mcp-servers
@@ -86,20 +88,28 @@ public class MilvusMemoryStore implements MemoryStoreInterface {
     /** 字段名常量 - 时间戳 */
     private static final String FIELD_TIMESTAMP = "timestamp";
 
-    /** Milvus 客户端 */
-    @Autowired
-    private MilvusClientV2 milvusClient;
-
+    /** Milvus 客户端（由公共 mcp-common 提供；未启用时为 null） */
+    private final ObjectProvider<MilvusClientV2> milvusClientProvider;
     /** 嵌入服务 */
-    @Autowired
-    private EmbeddingService embeddingService;
-
-    /** Milvus 配置属性 */
-    @Autowired
-    private MilvusProperties milvusProperties;
+    private final EmbeddingService embeddingService;
+    /** Milvus 公共配置 */
+    private final MilvusConfig milvusConfig;
 
     /** JSON 序列化工具 */
     private final Gson gson = new Gson();
+
+    @Autowired
+    public MilvusMemoryStore(ObjectProvider<MilvusClientV2> milvusClientProvider,
+                             EmbeddingService embeddingService,
+                             MilvusConfig milvusConfig) {
+        this.milvusClientProvider = milvusClientProvider;
+        this.embeddingService = embeddingService;
+        this.milvusConfig = milvusConfig;
+    }
+
+    private MilvusClientV2 getClient() {
+        return milvusClientProvider.getIfAvailable();
+    }
 
     /**
      * 初始化方法
@@ -109,7 +119,7 @@ public class MilvusMemoryStore implements MemoryStoreInterface {
      */
     @PostConstruct
     public void init() {
-        if (milvusClient == null) {
+        if (getClient() == null) {
             log.warn("Milvus 客户端未初始化");
             return;
         }
@@ -121,11 +131,11 @@ public class MilvusMemoryStore implements MemoryStoreInterface {
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             try {
                 // 先验证连接是否可用
-                milvusClient.listCollections();
+                getClient().listCollections();
                 log.info("Milvus 连接验证成功");
 
                 createCollectionIfNotExists();
-                log.info("MilvusMemoryStore 初始化完成: collection={}", milvusProperties.collectionName);
+                log.info("MilvusMemoryStore 初始化完成: collection={}", milvusConfig.getCollectionName());
                 return; // 成功则退出
             } catch (Exception e) {
                 log.warn("Milvus 初始化尝试 {}/{} 失败: {}", attempt, maxRetries, e.getMessage());
@@ -152,11 +162,11 @@ public class MilvusMemoryStore implements MemoryStoreInterface {
     private void createCollectionIfNotExists() {
         // 检查集合是否已存在
         HasCollectionReq hasReq = HasCollectionReq.builder()
-                .collectionName(milvusProperties.collectionName)
+                .collectionName(milvusConfig.getCollectionName())
                 .build();
 
-        if (milvusClient.hasCollection(hasReq)) {
-            log.debug("记忆集合已存在: {}", milvusProperties.collectionName);
+        if (getClient().hasCollection(hasReq)) {
+            log.debug("记忆集合已存在: {}", milvusConfig.getCollectionName());
             return;
         }
 
@@ -203,13 +213,13 @@ public class MilvusMemoryStore implements MemoryStoreInterface {
 
         // 创建集合
         CreateCollectionReq createReq = CreateCollectionReq.builder()
-                .collectionName(milvusProperties.collectionName)
+                .collectionName(milvusConfig.getCollectionName())
                 .collectionSchema(schema)
                 .indexParams(Collections.singletonList(indexParam))
                 .build();
 
-        milvusClient.createCollection(createReq);
-        log.info("创建记忆集合成功: collection={}, dimension={}", milvusProperties.collectionName, dimension);
+        getClient().createCollection(createReq);
+        log.info("创建记忆集合成功: collection={}, dimension={}", milvusConfig.getCollectionName(), dimension);
     }
 
     /**
@@ -226,7 +236,7 @@ public class MilvusMemoryStore implements MemoryStoreInterface {
      */
     @Override
     public String addEntry(String userId, String target, String category, String content) {
-        if (milvusClient == null) {
+        if (getClient() == null) {
             log.warn("Milvus 不可用");
             return "";
         }
@@ -255,11 +265,11 @@ public class MilvusMemoryStore implements MemoryStoreInterface {
 
             // 插入数据
             InsertReq insertReq = InsertReq.builder()
-                    .collectionName(milvusProperties.collectionName)
+                    .collectionName(milvusConfig.getCollectionName())
                     .data(Collections.singletonList(data))
                     .build();
 
-            milvusClient.insert(insertReq);
+            getClient().insert(insertReq);
             log.debug("记忆已添加: userId={}, target={}, id={}", userId, target, id);
 
             return id;
@@ -284,7 +294,7 @@ public class MilvusMemoryStore implements MemoryStoreInterface {
      */
     @Override
     public String replaceEntry(String userId, String target, String entryId, String newContent) {
-        if (milvusClient == null) {
+        if (getClient() == null) {
             log.warn("Milvus 不可用");
             return "";
         }
@@ -315,7 +325,7 @@ public class MilvusMemoryStore implements MemoryStoreInterface {
      */
     @Override
     public void removeEntry(String userId, String target, String entryId) {
-        if (milvusClient == null) {
+        if (getClient() == null) {
             log.warn("Milvus 不可用");
             return;
         }
@@ -324,11 +334,11 @@ public class MilvusMemoryStore implements MemoryStoreInterface {
             String filter = FIELD_ID + " == \"" + entryId + "\"";
 
             DeleteReq deleteReq = DeleteReq.builder()
-                    .collectionName(milvusProperties.collectionName)
+                    .collectionName(milvusConfig.getCollectionName())
                     .filter(filter)
                     .build();
 
-            milvusClient.delete(deleteReq);
+            getClient().delete(deleteReq);
             log.debug("记忆已删除: userId={}, id={}", userId, entryId);
 
         } catch (Exception e) {
@@ -350,7 +360,7 @@ public class MilvusMemoryStore implements MemoryStoreInterface {
      */
     @Override
     public String getRelevantMemory(String userId, String target, String context) {
-        if (milvusClient == null) {
+        if (getClient() == null) {
             log.warn("Milvus 不可用");
             return "(读取失败: Milvus 不可用)";
         }
@@ -371,7 +381,7 @@ public class MilvusMemoryStore implements MemoryStoreInterface {
 
             // 执行向量搜索
             SearchReq searchReq = SearchReq.builder()
-                    .collectionName(milvusProperties.collectionName)
+                    .collectionName(milvusConfig.getCollectionName())
                     .data(Collections.singletonList(new FloatVec(queryVector)))
                     .annsField(FIELD_EMBEDDING)
                     .topK(10)
@@ -380,7 +390,7 @@ public class MilvusMemoryStore implements MemoryStoreInterface {
                             FIELD_CATEGORY, FIELD_CONTENT, FIELD_TIMESTAMP))
                     .build();
 
-            SearchResp searchResp = milvusClient.search(searchReq);
+            SearchResp searchResp = getClient().search(searchReq);
             List<List<SearchResp.SearchResult>> searchResults = searchResp.getSearchResults();
 
             if (searchResults == null || searchResults.isEmpty()) {

@@ -3,7 +3,6 @@ package io.yunxi.mcp.milvus.tool;
 import org.springframework.stereotype.Component;
 
 import io.yunxi.mcp.common.handler.ToolHandler;
-import io.yunxi.mcp.milvus.config.MilvusClientHolder;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
@@ -12,13 +11,12 @@ import java.util.*;
  * 获取营养标准工具
  * <p>
  * 获取不同人群的营养素推荐标准，用于食谱评分和营养分析。
+ * 基于中国居民膳食指南内置常量，不依赖 Milvus 客户端。
  * </p>
  */
 @Slf4j
 @Component
 public class GetNutrientStandardTool implements ToolHandler {
-
-    private final MilvusClientHolder clientHolder;
 
     // 默认营养标准（基于中国居民膳食指南）
     private static final Map<String, Map<String, Object>> DEFAULT_STANDARDS = new LinkedHashMap<>();
@@ -59,10 +57,6 @@ public class GetNutrientStandardTool implements ToolHandler {
                 "carbsMin", 200, "carbsMax", 300,
                 "description", "成人教师"
         ));
-    }
-
-    public GetNutrientStandardTool(MilvusClientHolder clientHolder) {
-        this.clientHolder = clientHolder;
     }
 
     @Override

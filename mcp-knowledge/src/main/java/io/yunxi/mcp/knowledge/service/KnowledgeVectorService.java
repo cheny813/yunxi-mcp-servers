@@ -8,14 +8,14 @@ import io.milvus.v2.common.IndexParam;
 import io.milvus.v2.service.vector.request.SearchReq;
 import io.milvus.v2.service.vector.request.data.FloatVec;
 import io.milvus.v2.service.vector.response.SearchResp;
-import io.yunxi.mcp.knowledge.config.MilvusClientConfig;
 import io.yunxi.mcp.common.embedding.EmbeddingService;
+import io.yunxi.mcp.common.milvus.MilvusConfig;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
 import java.util.*;
 
 /**
@@ -30,23 +30,25 @@ public class KnowledgeVectorService {
 
     private static final Gson gson = new Gson();
 
-    @Autowired
-    private MilvusClientConfig milvusClientConfig;
+    private final ObjectProvider<MilvusClientV2> milvusClientProvider;
+    private final MilvusConfig milvusConfig;
+    private final EmbeddingService embeddingService;
 
     @Autowired
-    private EmbeddingService embeddingService;
+    public KnowledgeVectorService(ObjectProvider<MilvusClientV2> milvusClientProvider,
+                                  MilvusConfig milvusConfig,
+                                  EmbeddingService embeddingService) {
+        this.milvusClientProvider = milvusClientProvider;
+        this.milvusConfig = milvusConfig;
+        this.embeddingService = embeddingService;
+    }
 
     private MilvusClientV2 getClient() {
-        return milvusClientConfig.getClient();
+        return milvusClientProvider.getIfAvailable();
     }
 
     private String getCollectionName() {
-        return milvusClientConfig.getCollectionName();
-    }
-
-    @PostConstruct
-    public void init() {
-        log.info("KnowledgeVectorService 初始化完成");
+        return milvusConfig.getCollectionName();
     }
 
     /**
