@@ -1,9 +1,10 @@
+chcp 65001 >nul 2>&1
 @echo off
-chcp 65001 >nul
 
 set PORT=40303
 
 for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%PORT% " ^| findstr LISTENING') do taskkill /F /PID %%a >nul 2>&1
 
-cd target
+cd /d "%~dp0target"
 java -Dfile.encoding=UTF-8 -jar mcp-pagegen-1.0.0.jar --server.port=%PORT%
+pause

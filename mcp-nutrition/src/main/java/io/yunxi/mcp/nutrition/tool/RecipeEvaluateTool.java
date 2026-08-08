@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -51,19 +52,27 @@ public class RecipeEvaluateTool implements ToolHandler {
 
     @Override
     public Map<String, Object> getInputSchema() {
+        Map<String, Object> props = new LinkedHashMap<>();
+        props.put("calorie", Map.of("type", "number", "description", "实际摄入热量（kcal/人/餐）"));
+        props.put("protein", Map.of("type", "number", "description", "实际摄入蛋白质（g/人/餐）"));
+        props.put("fat", Map.of("type", "number", "description", "实际摄入脂肪（g/人/餐）"));
+        props.put("carbs", Map.of("type", "number", "description", "实际摄入碳水化合物（g/人/餐）"));
+        props.put("crowdType", Map.of("type", "string", "description", "人群类型（学龄前/小学低年级/小学高年级/初中生/高中生/教师）"));
+        props.put("schoolType", Map.of("type", "string", "description", "学校类型（优质城市/普通城市/农村）"));
+        props.put("mealPrice", Map.of("type", "number", "description", "餐费价格（元）"));
+        props.put("dishCount", Map.of("type", "integer", "description", "当日菜品总数（可选）"));
+        props.put("mealTypes", Map.of("type", "string", "description", "餐次列表，逗号分隔（可选，如：早餐,午餐,晚餐）"));
+        props.put("dayCount", Map.of("type", "integer", "description", "评估天数（可选，默认1）"));
+        props.put("calcium", Map.of("type", "number", "description", "钙实际摄入量(mg，可选)"));
+        props.put("iron", Map.of("type", "number", "description", "铁实际摄入量(mg，可选)"));
+        props.put("zinc", Map.of("type", "number", "description", "锌实际摄入量(mg，可选)"));
+        props.put("vitA", Map.of("type", "number", "description", "维生素A实际摄入量(μg RE，可选)"));
+        props.put("vitB1", Map.of("type", "number", "description", "维生素B1实际摄入量(mg，可选)"));
+        props.put("vitB2", Map.of("type", "number", "description", "维生素B2实际摄入量(mg，可选)"));
+        props.put("vitC", Map.of("type", "number", "description", "维生素C实际摄入量(mg，可选)"));
         return Map.of(
                 "type", "object",
-                "properties", Map.of(
-                        "calorie", Map.of("type", "number", "description", "实际摄入热量（kcal/人/餐）"),
-                        "protein", Map.of("type", "number", "description", "实际摄入蛋白质（g/人/餐）"),
-                        "fat", Map.of("type", "number", "description", "实际摄入脂肪（g/人/餐）"),
-                        "carbs", Map.of("type", "number", "description", "实际摄入碳水化合物（g/人/餐）"),
-                        "crowdType", Map.of("type", "string", "description", "人群类型（学龄前/小学低年级/小学高年级/初中生/高中生/教师）"),
-                        "schoolType", Map.of("type", "string", "description", "学校类型（优质城市/普通城市/农村）"),
-                        "mealPrice", Map.of("type", "number", "description", "餐费价格（元）"),
-                        "dishCount", Map.of("type", "integer", "description", "当日菜品总数（可选）"),
-                        "mealTypes", Map.of("type", "string", "description", "餐次列表，逗号分隔（可选，如：早餐,午餐,晚餐）"),
-                        "dayCount", Map.of("type", "integer", "description", "评估天数（可选，默认1）")),
+                "properties", props,
                 "required", List.of("calorie", "protein", "fat", "carbs", "crowdType", "schoolType", "mealPrice"));
     }
 
@@ -82,6 +91,13 @@ public class RecipeEvaluateTool implements ToolHandler {
                         ? List.of(getString(args, "mealTypes").split(","))
                         : List.of("午餐"))
                 .dayCount(args.containsKey("dayCount") ? getInt(args, "dayCount") : 1)
+                .calcium(optDouble(args, "calcium"))
+                .iron(optDouble(args, "iron"))
+                .zinc(optDouble(args, "zinc"))
+                .vitA(optDouble(args, "vitA"))
+                .vitB1(optDouble(args, "vitB1"))
+                .vitB2(optDouble(args, "vitB2"))
+                .vitC(optDouble(args, "vitC"))
                 .build();
 
         ScoringResult result = scoringEngine.evaluate(request);
@@ -108,6 +124,22 @@ public class RecipeEvaluateTool implements ToolHandler {
         formatDim(sb, "脂肪", dims.get("fat"), 0.15);
         formatDim(sb, "碳水化合物", dims.get("carbs"), 0.15);
         formatDim(sb, "食材多样性", dims.get("variety"), 0.15);
+
+        // 微量元素 / 维生素明细（按 实际摄入 / 每日推荐 达标率）
+        var micro = r.getMicroDimensions();
+        if (micro != null && !micro.isEmpty()) {
+            Map<String, String> labels = Map.of(
+                    "calcium", "钙(mg)", "iron", "铁(mg)", "zinc", "锌(mg)",
+                    "vitA", "维A(μg)", "vitB1", "维B1(mg)", "vitB2", "维B2(mg)", "vitC", "维C(mg)");
+            sb.append("\n微量元素 / 维生素评分:\n");
+            micro.forEach((k, dim) -> {
+                String label = labels.getOrDefault(k, k);
+                double rec = dim.rangeMax();
+                double pct = rec > 0 ? Math.min(100, dim.actualValue() / rec * 100) : 0;
+                sb.append(String.format("  %s: %.1f分 (实际%.1f / 推荐%.1f, 达标%.0f%%)\n",
+                        label, dim.score(), dim.actualValue(), rec, pct));
+            });
+        }
         return sb.toString();
     }
 
@@ -135,6 +167,13 @@ public class RecipeEvaluateTool implements ToolHandler {
         if (v instanceof Number n) return n.intValue();
         if (v == null) return 0;
         try { return Integer.parseInt(v.toString()); } catch (NumberFormatException e) { return 0; }
+    }
+
+    private double optDouble(Map<String, Object> m, String k) {
+        Object v = m.get(k);
+        if (v instanceof Number n) return n.doubleValue();
+        if (v == null) return 0;
+        try { return Double.parseDouble(v.toString()); } catch (NumberFormatException e) { return 0; }
     }
 
     private String getString(Map<String, Object> m, String k) {

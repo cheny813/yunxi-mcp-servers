@@ -57,7 +57,11 @@ public class DishQueryService {
     public List<DishDto> searchDishes(String keyword, int limit) {
         String sql = """
                 SELECT d.id, d.name, d.category, d.description, d.cuisine_type,
-                       n.protein, n.fat, n.carb, n.calories, n.fiber
+                       n.protein, n.fat, n.carb, n.calories, n.fiber,
+                       COALESCE(n.calcium,0) AS calcium, COALESCE(n.iron,0) AS iron,
+                       COALESCE(n.zinc,0) AS zinc, COALESCE(n.vit_a,0) AS vit_a,
+                       COALESCE(n.vit_b1,0) AS vit_b1, COALESCE(n.vit_b2,0) AS vit_b2,
+                       COALESCE(n.vit_c,0) AS vit_c
                 FROM dishes d
                 LEFT JOIN dish_nutrients n ON d.id = n.dish_id
                 WHERE d.name LIKE ? AND d.deleted = 0
@@ -75,6 +79,13 @@ public class DishQueryService {
             dto.setCarb(rs.getDouble("carb"));
             dto.setCalories(rs.getDouble("calories"));
             dto.setFiber(rs.getDouble("fiber"));
+            dto.setCalcium(rs.getDouble("calcium"));
+            dto.setIron(rs.getDouble("iron"));
+            dto.setZinc(rs.getDouble("zinc"));
+            dto.setVitA(rs.getDouble("vit_a"));
+            dto.setVitB1(rs.getDouble("vit_b1"));
+            dto.setVitB2(rs.getDouble("vit_b2"));
+            dto.setVitC(rs.getDouble("vit_c"));
             return dto;
         }, "%" + keyword + "%", limit);
     }
@@ -89,7 +100,11 @@ public class DishQueryService {
     public List<DishDto> getDishesByCategory(String category, int limit) {
         String sql = """
                 SELECT d.id, d.name, d.category, d.description, d.cuisine_type,
-                       n.protein, n.fat, n.carb, n.calories, n.fiber
+                       n.protein, n.fat, n.carb, n.calories, n.fiber,
+                       COALESCE(n.calcium,0) AS calcium, COALESCE(n.iron,0) AS iron,
+                       COALESCE(n.zinc,0) AS zinc, COALESCE(n.vit_a,0) AS vit_a,
+                       COALESCE(n.vit_b1,0) AS vit_b1, COALESCE(n.vit_b2,0) AS vit_b2,
+                       COALESCE(n.vit_c,0) AS vit_c
                 FROM dishes d
                 LEFT JOIN dish_nutrients n ON d.id = n.dish_id
                 WHERE d.category = ? AND d.deleted = 0
@@ -107,6 +122,13 @@ public class DishQueryService {
             dto.setCarb(rs.getDouble("carb"));
             dto.setCalories(rs.getDouble("calories"));
             dto.setFiber(rs.getDouble("fiber"));
+            dto.setCalcium(rs.getDouble("calcium"));
+            dto.setIron(rs.getDouble("iron"));
+            dto.setZinc(rs.getDouble("zinc"));
+            dto.setVitA(rs.getDouble("vit_a"));
+            dto.setVitB1(rs.getDouble("vit_b1"));
+            dto.setVitB2(rs.getDouble("vit_b2"));
+            dto.setVitC(rs.getDouble("vit_c"));
             return dto;
         }, category, limit);
     }
@@ -140,5 +162,13 @@ public class DishQueryService {
         private double carb;       // 碳水化合物(g)
         private double calories;   // 热量(kcal)
         private double fiber;      // 膳食纤维(g)
+        // 微量元素 / 维生素（每日摄入量，单位见注释；列不存在时默认 0）
+        private double calcium;    // 钙(mg)
+        private double iron;       // 铁(mg)
+        private double zinc;       // 锌(mg)
+        private double vitA;       // 维生素A(μg RE)
+        private double vitB1;      // 维生素B1(mg)
+        private double vitB2;      // 维生素B2(mg)
+        private double vitC;       // 维生素C(mg)
     }
 }

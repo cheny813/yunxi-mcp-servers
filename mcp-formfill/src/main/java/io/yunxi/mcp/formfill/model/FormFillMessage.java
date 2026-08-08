@@ -28,24 +28,15 @@ public class FormFillMessage {
     private String type;
 
     /**
-     * 场景类型
-     * - recipe: 食谱表单
-     * - weekly_recipe: 周计划食谱
-     * - safety: 食安表单
-     * - budget: 经费表单
-     * - generic: 通用表单
+     * 场景标识
      */
     private String scene;
 
     /**
-     * 表单数据
+     * 表单数据，键为表单元素 ID，值为待填写内容。
+     * 由上游 LLM 通过 formfill_get_structure 了解表单结构后直接产出。
      */
     private Map<String, Object> formData;
-
-    /**
-     * 字段映射配置
-     */
-    private Map<String, String> fieldMapping;
 
     /**
      * 附加参数

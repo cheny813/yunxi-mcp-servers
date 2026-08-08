@@ -110,7 +110,15 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
                 <configuration>
+                    <mainClass>io.yunxi.mcp.qdrant.QdrantMcpApplication</mainClass>
                     <skip>true</skip>
                 </configuration>
             </plugin>

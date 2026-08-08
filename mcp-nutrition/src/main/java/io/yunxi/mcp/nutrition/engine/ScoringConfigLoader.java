@@ -134,7 +134,32 @@ public class ScoringConfigLoader {
         if (g != null) g.forEach((k, v) -> grades.add(new GradeThreshold(k, ((Number) v).doubleValue())));
         grades.sort((a, b) -> Double.compare(b.threshold, a.threshold));
 
-        return new ScoringConfig(weights, schoolTypeTolerance, priceTiers, standards, grades);
+        // ── 微量元素权重与每日推荐摄入量 ──
+        Map<String, Double> microWeights = new LinkedHashMap<>();
+        Object microItems = config.get("micro_items");
+        if (microItems instanceof Map) {
+            ((Map<String, Object>) microItems).forEach((k, v) -> microWeights.put(k, ((Number) v).doubleValue()));
+        }
+        Map<String, Double> microRda = new LinkedHashMap<>();
+        Object rda = config.get("micro-rda");
+        if (rda instanceof Map) {
+            ((Map<String, Object>) rda).forEach((k, v) -> microRda.put(k, ((Number) v).doubleValue()));
+        }
+
+        // 居民人均级 RDA 覆盖（按人群名 → 微量元素 → 数值）
+        Map<String, Map<String, Double>> microRdaResident = new LinkedHashMap<>();
+        Object residentRda = config.get("micro-rda-resident");
+        if (residentRda instanceof Map) {
+            ((Map<String, Object>) residentRda).forEach((crowd, val) -> {
+                if (val instanceof Map) {
+                    Map<String, Double> inner = new LinkedHashMap<>();
+                    ((Map<String, Object>) val).forEach((k, v) -> inner.put(k, ((Number) v).doubleValue()));
+                    microRdaResident.put(crowd, inner);
+                }
+            });
+        }
+
+        return new ScoringConfig(weights, schoolTypeTolerance, priceTiers, standards, grades, microWeights, microRda, microRdaResident);
     }
 
     // ─── 内部类型 ──────────────────────────

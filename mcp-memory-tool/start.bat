@@ -1,5 +1,5 @@
-@echo off
 chcp 65001 >nul
+@echo off
 
 set MCP_PORT=40304
 set MCP_HOST=localhost

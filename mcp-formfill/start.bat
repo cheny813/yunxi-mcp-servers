@@ -1,7 +1,7 @@
+chcp 65001 >nul 2>&1
 @echo off
-chcp 65001 >nul
 echo ========================================
-echo   启动表单填写 MCP 服务器
+echo   Start FormFill MCP Server (Port: 3003)
 echo ========================================
 cd /d "%~dp0"
 java -Dfile.encoding=UTF-8 -jar target/mcp-formfill-1.0.0.jar

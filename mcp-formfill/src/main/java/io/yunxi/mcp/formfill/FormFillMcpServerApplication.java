@@ -7,16 +7,12 @@ import org.slf4j.LoggerFactory;
 
 /**
  * 表单填写 MCP 服务器
- * 
- * 提供智能表单填写能力，支持多种业务场景：
- * - 营养食谱管理（单日/周计划）
- * - 食品安全检测
- * - 经费管理
- * - 通用表单
- * 
- * 使用方式：
- * AI Agent 可以直接调用这些工具来填写表单，
- * 而不需要依赖前端的 Markdown 解析逻辑。
+ *
+ * 通用表单填写能力：根据"场景配置"将外部数据映射到目标表单元素，
+ * 并通过 WebSocket 下发给前端执行填写。场景由 classpath 下的
+ * scenarios/*.json 驱动，部署时按需放入即可，无需改动代码。
+ *
+ * AI Agent 直接调用工具（formfill_fill / formfill_get_structure / formfill_list_scenes）即可填写表单。
  */
 @SpringBootApplication
 public class FormFillMcpServerApplication {

@@ -59,6 +59,16 @@ public class ScoringEngine {
         dimensions.put("carbs", scoreDimension(request.getCarbs(), std.carbsMin(), std.carbsMax(), tolerance, totalMealRatio, dayCount));
         dimensions.put("variety", scoreVariety(request.getDishCount(), request.getMealTypes().size() * dayCount, tolerance));
 
+        // ── 微量元素维度：按实际摄入 / 每日推荐摄入量 的达标率计分 ──
+        // 优先采用居民人均级 RDA（micro-rda-resident），命中人群则用，否则用默认 micro-rda
+        Map<String, Double> crowdRda = resolveCrowdRda(config, std.name());
+        double microScore = scoreMicro(request, config, crowdRda);
+        Map<String, ScoringEngine.DimensionScore> microDims = buildMicroDimensions(request, config, crowdRda);
+        if (config.weights().containsKey("micro")) {
+            dimensions.put("micro", new ScoringEngine.DimensionScore(
+                    Math.round(microScore * 10) / 10.0, microScore, 60, 100));
+        }
+
         double totalScore = 0;
         for (Map.Entry<String, ScoringEngine.DimensionScore> entry : dimensions.entrySet()) {
             Double weight = config.weights().getOrDefault(entry.getKey(), 0.0);
@@ -71,8 +81,74 @@ public class ScoringEngine {
                 .grade(getGrade(config, totalScore))
                 .tolerance(tolerance)
                 .dimensions(dimensions)
+                .microDimensions(microDims)
                 .targetScore(calculateTargetScore(request.getSchoolType()))
                 .build();
+    }
+
+    /**
+     * 计算微量元素综合分：各子项（钙/铁/锌/维A/B1/B2）按 实际/推荐 达标率计分，
+     * 再按 micro_items 子权重加权汇总。
+     */
+    private double scoreMicro(ScoringRequest request, ScoringConfig config, Map<String, Double> rda) {
+        if (rda == null || rda.isEmpty()) return 0;
+        Map<String, Double> itemWeights = config.microWeights();
+        double sum = 0, wsum = 0;
+        for (Map.Entry<String, Double> e : rda.entrySet()) {
+            String key = e.getKey();
+            double actual = getMicroActual(request, key);
+            double rec = e.getValue();
+            double itemScore = rec > 0 ? Math.min(100, actual / rec * 100) : 0;
+            double w = itemWeights.getOrDefault(key, 1.0 / rda.size());
+            sum += itemScore * w;
+            wsum += w;
+        }
+        return wsum > 0 ? Math.round(sum / wsum * 10) / 10.0 : 0;
+    }
+
+    /** 生成各微量元素独立评分明细（用于前端逐条展示）。 */
+    private Map<String, ScoringEngine.DimensionScore> buildMicroDimensions(ScoringRequest request, ScoringConfig config, Map<String, Double> rda) {
+        Map<String, ScoringEngine.DimensionScore> map = new LinkedHashMap<>();
+        if (rda == null) return map;
+        for (Map.Entry<String, Double> e : rda.entrySet()) {
+            String key = e.getKey();
+            double actual = getMicroActual(request, key);
+            double rec = e.getValue();
+            double score = rec > 0 ? Math.min(100, actual / rec * 100) : 0;
+            map.put(key, new ScoringEngine.DimensionScore(Math.round(score * 10) / 10.0, actual, 0, rec));
+        }
+        return map;
+    }
+
+    /**
+     * 解析当前人群使用的微量元素 RDA：
+     * 若 micro-rda-resident 配置了与标准人群名（std.name()）匹配的键，则优先使用；
+     * 否则回退到默认 micro-rda（校园口径）。
+     */
+    private Map<String, Double> resolveCrowdRda(ScoringConfig config, String crowdName) {
+        Map<String, Map<String, Double>> resident = config.microRdaResident();
+        if (resident != null && crowdName != null) {
+            for (Map.Entry<String, Map<String, Double>> e : resident.entrySet()) {
+                String key = e.getKey().toLowerCase();
+                if (crowdName.toLowerCase().contains(key) || key.contains(crowdName.toLowerCase())) {
+                    return e.getValue();
+                }
+            }
+        }
+        return config.microRda();
+    }
+
+    private double getMicroActual(ScoringRequest request, String key) {
+        return switch (key) {
+            case "calcium" -> request.getCalcium();
+            case "iron" -> request.getIron();
+            case "zinc" -> request.getZinc();
+            case "vitA" -> request.getVitA();
+            case "vitB1" -> request.getVitB1();
+            case "vitB2" -> request.getVitB2();
+            case "vitC" -> request.getVitC();
+            default -> 0;
+        };
     }
 
     // ==================== 内部计算 ====================
@@ -169,6 +245,14 @@ public class ScoringEngine {
         private int dayCount;
         private String schoolType;
         private Double mealPrice;
+        // 微量元素实际摄入（来自菜品营养汇总；单位见 DishDto）
+        private double calcium;
+        private double iron;
+        private double zinc;
+        private double vitA;
+        private double vitB1;
+        private double vitB2;
+        private double vitC;
     }
 
     @lombok.Data
@@ -181,6 +265,7 @@ public class ScoringEngine {
         private double tolerance;
         private int targetScore;
         private Map<String, DimensionScore> dimensions;
+        private Map<String, DimensionScore> microDimensions;
         private String error;
 
         static ScoringResult error(String msg) {

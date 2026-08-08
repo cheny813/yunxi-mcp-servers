@@ -13,14 +13,17 @@ public record ScoringConfig(
         Map<String, Double> schoolTypeTolerance,
         List<double[]> priceTiers,
         List<ScoringConfigLoader.NutritionStandard> standards,
-        List<ScoringConfigLoader.GradeThreshold> grades) {
+        List<ScoringConfigLoader.GradeThreshold> grades,
+        Map<String, Double> microWeights,
+        Map<String, Double> microRda,
+        Map<String, Map<String, Double>> microRdaResident) {
 
     /**
      * 创建带默认值的配置（YAML 缺失时使用）。
      */
     public static ScoringConfig defaults() {
         Map<String, Double> weights = new LinkedHashMap<>();
-        weights.putAll(Map.of("calorie", 0.30, "protein", 0.25, "fat", 0.15, "carbs", 0.15, "variety", 0.15));
+        weights.putAll(Map.of("calorie", 0.30, "protein", 0.25, "fat", 0.15, "carbs", 0.15, "variety", 0.15, "micro", 0.15));
 
         Map<String, Double> schoolTypeTolerance = new LinkedHashMap<>();
         schoolTypeTolerance.putAll(Map.of("优质城市", 1.10, "普通城市", 1.20, "农村", 1.35));
@@ -37,6 +40,14 @@ public record ScoringConfig(
                 new ScoringConfigLoader.GradeThreshold("C", 70),
                 new ScoringConfigLoader.GradeThreshold("D", 60)));
 
-        return new ScoringConfig(weights, schoolTypeTolerance, priceTiers, Collections.emptyList(), grades);
+        Map<String, Double> microWeights = new LinkedHashMap<>();
+        microWeights.putAll(Map.of("calcium", 0.18, "iron", 0.16, "zinc", 0.14, "vitA", 0.18, "vitB1", 0.17, "vitB2", 0.17));
+
+        Map<String, Double> microRda = new LinkedHashMap<>();
+        microRda.putAll(Map.of("calcium", 800.0, "iron", 12.0, "zinc", 12.5, "vitA", 800.0, "vitB1", 1.4, "vitB2", 1.4, "vitC", 100.0));
+
+        Map<String, Map<String, Double>> microRdaResident = new LinkedHashMap<>();
+
+        return new ScoringConfig(weights, schoolTypeTolerance, priceTiers, Collections.emptyList(), grades, microWeights, microRda, microRdaResident);
     }
 }

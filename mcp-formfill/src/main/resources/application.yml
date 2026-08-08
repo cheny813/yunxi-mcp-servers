@@ -9,4 +9,4 @@ spring:
 mcp:
   server:
     name: formfill-server
-    description: 智能表单填写服务器，支持食谱、食安、经费等多种场景
+    description: 通用智能表单填写服务器，按场景配置驱动多种表单的自动填写

@@ -53,6 +53,9 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            <configuration>
+                <mainClass>io.yunxi.mcp.api.ApiGatewayMcpServer</mainClass>
+            </configuration>
                 <executions>
                     <execution>
                         <goals>
