@@ -8,6 +8,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -71,6 +72,7 @@ public class SyncDatasourceRegistry {
             config.setMaximumPoolSize(2);
             config.setMinimumIdle(0);
             config.setConnectionTimeout(10000);
+            config.setInitializationFailTimeout(0); // 数据库不可达时不抛异常，由调用方探测后降级
             config.setPoolName("sync-ds-" + id);
             HikariDataSource ds = new HikariDataSource(config);
             return new JdbcTemplate(ds);
@@ -91,6 +93,25 @@ public class SyncDatasourceRegistry {
             return true;
         }
         return dataSources.containsKey(dsId);
+    }
+
+    /**
+     * 探测数据源是否能建立连接（用于启动期/调用期优雅降级判断）。
+     * 连接失败仅记录 WARN 并返回 false，不向上抛出，避免阻断启动或调用。
+     *
+     * @param dsId 数据源标识（null / "default" 表示 Spring 默认）
+     * @return 是否可连通
+     */
+    public boolean testConnection(String dsId) {
+        try {
+            DataSource ds = getDataSource(dsId);
+            try (Connection c = ds.getConnection()) {
+                return c.isValid(2);
+            }
+        } catch (Exception e) {
+            log.warn("数据源 {} 连接探测失败，将降级处理: {}", dsId, e.getMessage());
+            return false;
+        }
     }
 
     // ─── 速记方法（Spring default）────────

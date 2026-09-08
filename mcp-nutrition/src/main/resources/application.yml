@@ -19,6 +19,10 @@ spring:
     username: root
     password: ${MYSQL_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    # 数据库不可达时不阻断应用启动（initializationFailTimeout<=0 表示连接池惰性建立连接）；
+    # 实际查询失败由工具层捕获并返回友好错误，实现"启动即降级"。
+    hikari:
+      initialization-fail-timeout: 0
 
 # ---- Embedding 向量化（本机 Ollama BGE-M3）----
 embedding:

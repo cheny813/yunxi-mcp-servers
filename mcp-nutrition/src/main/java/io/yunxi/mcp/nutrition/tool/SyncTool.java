@@ -38,7 +38,7 @@ public class SyncTool implements ToolHandler {
 
     @Override
     public String getName() {
-        return "syncData";
+        return "sync_data";
     }
 
     @Override

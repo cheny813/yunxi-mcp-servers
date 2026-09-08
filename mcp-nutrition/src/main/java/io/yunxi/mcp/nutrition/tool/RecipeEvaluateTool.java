@@ -40,14 +40,15 @@ public class RecipeEvaluateTool implements ToolHandler {
 
     @Override
     public String getName() {
-        return "evaluateRecipe";
+        return "evaluate_recipe";
     }
 
     @Override
     public String getDescription() {
-        return "评估学生营养餐食谱的营养均衡度和食材多样性，返回评分等级和改进建议。"
-                + "参数包括热量(kcal)、蛋白质(g)、脂肪(g)、碳水化合物(g)、人群类型(crowdType)、"
-                + "学校类型(schoolType)、餐费价格(mealPrice)，可选参数菜品数(dishCount)、餐次列表(mealTypes)、天数(dayCount)";
+        return "评估营养餐食谱的营养均衡度和食材多样性，返回评分等级和改进建议。"
+                + "参数包括热量(kcal)、蛋白质(g)、脂肪(g)、碳水化合物(g)、人群类型(crowdType)。"
+                + "学校营养餐需额外提供学校类型(schoolType)、餐费价格(mealPrice)；居民人群（儿童/成人/老人/孕产/慢病）省略这两项即可。"
+                + "可选参数：菜品数(dishCount)、餐次列表(mealTypes)、天数(dayCount)，以及微量元素实际摄入(calcium/iron/zinc/vitA/vitB1/vitB2/vitC)";
     }
 
     @Override
@@ -57,9 +58,9 @@ public class RecipeEvaluateTool implements ToolHandler {
         props.put("protein", Map.of("type", "number", "description", "实际摄入蛋白质（g/人/餐）"));
         props.put("fat", Map.of("type", "number", "description", "实际摄入脂肪（g/人/餐）"));
         props.put("carbs", Map.of("type", "number", "description", "实际摄入碳水化合物（g/人/餐）"));
-        props.put("crowdType", Map.of("type", "string", "description", "人群类型（学龄前/小学低年级/小学高年级/初中生/高中生/教师）"));
-        props.put("schoolType", Map.of("type", "string", "description", "学校类型（优质城市/普通城市/农村）"));
-        props.put("mealPrice", Map.of("type", "number", "description", "餐费价格（元）"));
+        props.put("crowdType", Map.of("type", "string", "description", "人群类型。学校营养餐：学龄前/小学低年级/小学高年级/初中生/高中生/教师；居民人群：儿童/成人/老人/孕产/慢病"));
+        props.put("schoolType", Map.of("type", "string", "description", "学校类型（优质城市/普通城市/农村）。学校营养餐必填；居民人群（儿童/成人/老人/孕产/慢病）调用时省略"));
+        props.put("mealPrice", Map.of("type", "number", "description", "餐费价格（元）。学校营养餐必填；居民人群调用时省略"));
         props.put("dishCount", Map.of("type", "integer", "description", "当日菜品总数（可选）"));
         props.put("mealTypes", Map.of("type", "string", "description", "餐次列表，逗号分隔（可选，如：早餐,午餐,晚餐）"));
         props.put("dayCount", Map.of("type", "integer", "description", "评估天数（可选，默认1）"));
@@ -73,7 +74,7 @@ public class RecipeEvaluateTool implements ToolHandler {
         return Map.of(
                 "type", "object",
                 "properties", props,
-                "required", List.of("calorie", "protein", "fat", "carbs", "crowdType", "schoolType", "mealPrice"));
+                "required", List.of("calorie", "protein", "fat", "carbs", "crowdType"));
     }
 
     @Override
@@ -100,7 +101,14 @@ public class RecipeEvaluateTool implements ToolHandler {
                 .vitC(optDouble(args, "vitC"))
                 .build();
 
-        ScoringResult result = scoringEngine.evaluate(request);
+        ScoringResult result;
+        try {
+            result = scoringEngine.evaluate(request);
+        } catch (Exception e) {
+            // 评分引擎异常（规则缺失/数据异常等）：返回友好错误而非崩溃 MCP 调用
+            log.error("RecipeEvaluateTool 评分失败：{}", e.getMessage());
+            return "营养评分服务暂不可用：" + e.getMessage() + "。请确认 scoring-rules.yml 已正确加载。";
+        }
         String formatted = formatResult(result);
         log.info("RecipeEvaluateTool: crowdType={} → grade={} score={}",
                 request.getCrowdType(), result.getGrade(), result.getTotalScore());

@@ -3,6 +3,8 @@ package io.yunxi.mcp.nutrition.tool;
 import io.yunxi.mcp.common.handler.ToolHandler;
 import io.yunxi.mcp.nutrition.service.DishQueryService;
 import io.yunxi.mcp.nutrition.service.DishQueryService.DishDto;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +13,8 @@ import java.util.stream.Collectors;
 @Component
 public class DishSearchTool implements ToolHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(DishSearchTool.class);
+
     private final DishQueryService dishQueryService;
 
     public DishSearchTool(DishQueryService dishQueryService) {
@@ -18,11 +22,11 @@ public class DishSearchTool implements ToolHandler {
     }
 
     @Override
-    public String getName() { return "searchDishes"; }
+    public String getName() { return "search_public_dishes"; }
 
     @Override
     public String getDescription() {
-        return "搜索菜品，支持按关键词搜索或按分类查询，返回菜品名称、分类、营养成分等信息";
+        return "搜索公共菜品库，支持按关键词搜索或按分类查询，返回菜品名称、分类、营养成分等信息";
     }
 
     @Override
@@ -42,13 +46,22 @@ public class DishSearchTool implements ToolHandler {
         String category = (String) arguments.get("category");
         int limit = arguments.containsKey("limit") ? ((Number) arguments.get("limit")).intValue() : 20;
 
-        List<DishDto> results;
-        if (keyword != null && !keyword.isBlank()) {
-            results = dishQueryService.searchDishes(keyword, limit);
-        } else if (category != null && !category.isBlank()) {
-            results = dishQueryService.getDishesByCategory(category, limit);
-        } else {
+        if ((keyword == null || keyword.isBlank()) && (category == null || category.isBlank())) {
             throw new RuntimeException("请提供 keyword（关键词搜索）或 category（分类查询）参数");
+        }
+
+        List<DishDto> results;
+        try {
+            if (keyword != null && !keyword.isBlank()) {
+                results = dishQueryService.searchDishes(keyword, limit);
+            } else {
+                results = dishQueryService.getDishesByCategory(category, limit);
+            }
+        } catch (Exception e) {
+            // 数据库未连接 / 营养库未初始化等：不向上抛异常崩溃 MCP 调用，返回友好降级信息
+            log.error("search_public_dishes 执行失败（数据服务可能不可用）：{}", e.getMessage());
+            return "营养数据服务暂不可用（数据库连接失败或营养库未初始化）：" + e.getMessage()
+                    + "。请检查 mcp-nutrition 的 MySQL 连接配置，并确认营养数据库已初始化。";
         }
 
         if (results.isEmpty()) {

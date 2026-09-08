@@ -36,7 +36,7 @@ MySQL (nutrition_zhaoxian)
   │
   ▼  Milvus (6 个向量集合)
   │
-  └── MCP Tools (searchDishes / evaluateRecipe / syncData)
+  └── MCP Tools (search_public_dishes / evaluate_recipe / sync_data)
 ```
 
 数据同步是启动时自动完成的一次性初始化，之后服务随时接受 MCP 工具调用。
@@ -45,9 +45,9 @@ MySQL (nutrition_zhaoxian)
 
 | 工具名 | 说明 |
 |--------|------|
-| `searchDishes` | 按关键词语义搜索菜品，返回名称、分类、营养成分 |
-| `evaluateRecipe` | 评估食谱营养评分，五项维度加权计算 |
-| `syncData` | 手动触发数据同步（type 可选：管道名 / dishes / all） |
+| `search_public_dishes` | 按关键词语义搜索公共菜品库，返回名称、分类、营养成分 |
+| `evaluate_recipe` | 评估食谱营养评分，五项维度加权计算 |
+| `sync_data` | 手动触发数据同步（type 可选：管道名 / dishes / all） |
 
 ## 数据同步
 
