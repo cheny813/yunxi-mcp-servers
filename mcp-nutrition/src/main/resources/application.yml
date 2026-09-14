@@ -15,9 +15,11 @@ spring:
       - classpath:sync-pipelines.yml
   # 唯一 MySQL 连接（sync_cursor 游标表 + 所有同步管道的 default 数据源均复用此池）
   datasource:
-    url: jdbc:mysql://192.168.10.153:3306/nutrition_zhaoxian?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
-    username: root
-    password: ${MYSQL_PASSWORD:root}
+    # 默认连接本地 docker MySQL（docker compose 一键启动会自动建 yunxi_nutrition 库与空表）。
+    # 团队内网 / 有正式库的环境，用环境变量 NUTRITION_DB_URL 指回正式库即可，避免硬编码生产地址。
+    url: ${NUTRITION_DB_URL:jdbc:mysql://localhost:3306/yunxi_nutrition?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
+    username: ${NUTRITION_DB_USER:root}
+    password: ${NUTRITION_DB_PASSWORD:${MYSQL_PASSWORD:root}}
     driver-class-name: com.mysql.cj.jdbc.Driver
     # 数据库不可达时不阻断应用启动（initializationFailTimeout<=0 表示连接池惰性建立连接）；
     # 实际查询失败由工具层捕获并返回友好错误，实现"启动即降级"。

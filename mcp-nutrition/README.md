@@ -26,7 +26,7 @@
 ## 架构概览
 
 ```
-MySQL (nutrition_zhaoxian)
+MySQL (yunxi_nutrition)
   │
   ├── dish_class, food_ingredient_class, nutrient_standard, ...
   │
@@ -99,7 +99,7 @@ server:
 spring:
   datasource:
     # 营养数据库连接（sync_cursor 游标表 + 所有管道的 default 数据源）
-    url: jdbc:mysql://host:3306/nutrition_zhaoxian?useUnicode=true&characterEncoding=utf-8
+    url: jdbc:mysql://host:3306/yunxi_nutrition?useUnicode=true&characterEncoding=utf-8
     username: root
     password: ${MYSQL_PASSWORD:root}
 
@@ -161,7 +161,7 @@ sync:
 
 ```bash
 # 1. 确保前置服务运行
-#    - MySQL（含 nutrition_zhaoxian 数据库）
+#    - MySQL（含 yunxi_nutrition 数据库）
 #    - Milvus（默认 localhost:19530）
 #    - Ollama（默认 localhost:11434，需提前拉取 bge-m3 模型）
 
@@ -196,7 +196,7 @@ tools:
 ## 依赖
 
 - Spring Boot 3.5.x + Web
-- MySQL 数据库（nutrition_zhaoxian 库，含 sync_cursor 游标表自动建表）
+- MySQL 数据库（yunxi_nutrition 库，含 sync_cursor 游标表自动建表）
 - Milvus 向量数据库（6 个集合，BGE-M3 1024 维向量）
 - Ollama（本机嵌入服务，bge-m3 模型）
 - mcp-common（MCP 协议基础设施 + ToolHandler 注册机制）
