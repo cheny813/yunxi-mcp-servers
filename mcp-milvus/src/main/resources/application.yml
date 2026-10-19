@@ -14,7 +14,7 @@ spring:
 #   - 使用 Token：设置 milvus.token（优先级更高）
 milvus:
   enabled: true
-  host: ${MILVUS_HOST:192.168.11.48}            # Milvus 服务地址(本机只能用IP，不能用localhost，127.0.0.1)
+  host: ${MILVUS_HOST:127.0.0.1}                # Milvus 服务地址(本机默认 127.0.0.1；跨机部署时用 MILVUS_HOST 覆盖)
   port: ${MILVUS_PORT:19530}                     # Milvus 服务端口
   database: ${MILVUS_DATABASE:default}           # 数据库名称
   username: ${MILVUS_USERNAME:root}                  # 用户名（认证模式时需要）
