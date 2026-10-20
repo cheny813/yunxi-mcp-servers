@@ -101,22 +101,33 @@ public class ScoringConfigLoader {
     private ScoringConfig parseConfig(Map<String, Object> config) {
         Map<String, Double> weights = new LinkedHashMap<>();
         Map<String, Object> w = (Map<String, Object>) config.get("weights");
-        if (w != null) w.forEach((k, v) -> weights.put(k, ((Number) v).doubleValue()));
+        if (w != null) w.forEach((k, v) -> {
+            Double d = toDoubleOrNull(v, "weights." + k);
+            if (d != null) weights.put(k, d);
+        });
 
         Map<String, Double> schoolTypeTolerance = new LinkedHashMap<>();
         List<double[]> priceTiers = new ArrayList<>();
         Map<String, Object> tol = (Map<String, Object>) config.get("tolerances");
         if (tol != null) {
             Map<String, Object> schoolTol = (Map<String, Object>) tol.get("school-type");
-            if (schoolTol != null) schoolTol.forEach((k, v) -> schoolTypeTolerance.put(k, ((Number) v).doubleValue()));
+            if (schoolTol != null) schoolTol.forEach((k, v) -> {
+                Double d = toDoubleOrNull(v, "tolerances.school-type." + k);
+                if (d != null) schoolTypeTolerance.put(k, d);
+            });
             List<List<Object>> priceTol = (List<List<Object>>) tol.get("price-tiers");
             if (priceTol != null) {
                 for (List<Object> tier : priceTol) {
-                    priceTiers.add(new double[]{
-                            ((Number) tier.get(0)).doubleValue(),
-                            ((Number) tier.get(1)).doubleValue(),
-                            ((Number) tier.get(2)).doubleValue()
-                    });
+                    if (tier == null || tier.size() < 3) {
+                        log.warn("评分配置 tolerances.price-tiers 存在非法区间（需 3 个元素），已跳过");
+                        continue;
+                    }
+                    Double lo = toDoubleOrNull(tier.get(0), "tolerances.price-tiers[].0");
+                    Double hi = toDoubleOrNull(tier.get(1), "tolerances.price-tiers[].1");
+                    Double f = toDoubleOrNull(tier.get(2), "tolerances.price-tiers[].2");
+                    if (lo != null && hi != null && f != null) {
+                        priceTiers.add(new double[]{lo, hi, f});
+                    }
                 }
             }
         }
@@ -131,19 +142,28 @@ public class ScoringConfigLoader {
 
         List<GradeThreshold> grades = new ArrayList<>();
         Map<String, Object> g = (Map<String, Object>) config.get("grades");
-        if (g != null) g.forEach((k, v) -> grades.add(new GradeThreshold(k, ((Number) v).doubleValue())));
+        if (g != null) g.forEach((k, v) -> {
+            Double d = toDoubleOrNull(v, "grades." + k);
+            if (d != null) grades.add(new GradeThreshold(k, d));
+        });
         grades.sort((a, b) -> Double.compare(b.threshold, a.threshold));
 
         // ── 微量元素权重与每日推荐摄入量 ──
         Map<String, Double> microWeights = new LinkedHashMap<>();
         Object microItems = config.get("micro_items");
         if (microItems instanceof Map) {
-            ((Map<String, Object>) microItems).forEach((k, v) -> microWeights.put(k, ((Number) v).doubleValue()));
+            ((Map<String, Object>) microItems).forEach((k, v) -> {
+                Double d = toDoubleOrNull(v, "micro_items." + k);
+                if (d != null) microWeights.put(k, d);
+            });
         }
         Map<String, Double> microRda = new LinkedHashMap<>();
         Object rda = config.get("micro-rda");
         if (rda instanceof Map) {
-            ((Map<String, Object>) rda).forEach((k, v) -> microRda.put(k, ((Number) v).doubleValue()));
+            ((Map<String, Object>) rda).forEach((k, v) -> {
+                Double d = toDoubleOrNull(v, "micro-rda." + k);
+                if (d != null) microRda.put(k, d);
+            });
         }
 
         // 居民人均级 RDA 覆盖（按人群名 → 微量元素 → 数值）
@@ -153,7 +173,10 @@ public class ScoringConfigLoader {
             ((Map<String, Object>) residentRda).forEach((crowd, val) -> {
                 if (val instanceof Map) {
                     Map<String, Double> inner = new LinkedHashMap<>();
-                    ((Map<String, Object>) val).forEach((k, v) -> inner.put(k, ((Number) v).doubleValue()));
+                    ((Map<String, Object>) val).forEach((k, v) -> {
+                        Double d = toDoubleOrNull(v, "micro-rda-resident." + crowd + "." + k);
+                        if (d != null) inner.put(k, d);
+                    });
                     microRdaResident.put(crowd, inner);
                 }
             });
@@ -163,6 +186,17 @@ public class ScoringConfigLoader {
     }
 
     // ─── 内部类型 ──────────────────────────
+
+    /**
+     * 安全地把配置值转成 double：非数值类型（如误嵌套的 LinkedHashMap）返回 null 并记 WARN，
+     * 交由调用方跳过该条目，避免单点畸形拖垮整份配置回退默认值。
+     */
+    private static Double toDoubleOrNull(Object v, String path) {
+        if (v instanceof Number n) return n.doubleValue();
+        log.warn("评分配置字段 '{}' 不是数值（实际类型 {}），该条目已跳过",
+                path, v == null ? "null" : v.getClass().getSimpleName());
+        return null;
+    }
 
     public record NutritionStandard(String name, List<String> keywords,
                                     double calorieMin, double calorieMax,
@@ -181,8 +215,14 @@ public class ScoringConfigLoader {
         }
         private static double getDouble(Map<String, Object> m, String key, int idx) {
             Object val = m.get(key);
-            if (val instanceof List) return ((Number) ((List<?>) val).get(idx)).doubleValue();
-            if (val instanceof Number) return ((Number) val).doubleValue();
+            if (val instanceof List<?> list) {
+                Object item = list.get(idx);
+                if (item instanceof Number n) return n.doubleValue();
+                log.warn("评分配置 standards 字段 '{}[{}]' 不是数值，按 0 处理", key, idx);
+                return 0;
+            }
+            if (val instanceof Number n) return n.doubleValue();
+            log.warn("评分配置 standards 字段 '{}' 不是数值，按 0 处理", key);
             return 0;
         }
     }
