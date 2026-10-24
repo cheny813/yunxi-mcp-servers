@@ -36,6 +36,7 @@ yunxi-mcp-servers/
 ├── mcp-redis/              # Redis MCP 服务器
 ├── mcp-milvus/             # Milvus 向量数据库 MCP 服务器
 ├── mcp-qdrant/             # Qdrant 向量数据库 MCP 服务器
+├── mcp-text2sql/           # Text2SQL MCP 服务器（两步法自然语言转 SQL）
 ├── mcp-logging/            # 日志查询 MCP 服务器
 ├── mcp-monitoring/         # 系统监控 MCP 服务器
 ├── mcp-knowledge/          # 知识库 MCP 服务器
@@ -91,6 +92,7 @@ yunxi-mcp-servers/
 | **mcp-redis** | 40102 | Redis MCP 服务 |
 | **mcp-milvus** | 40103 | Milvus 向量数据库 |
 | **mcp-qdrant** | 40104 | Qdrant 向量数据库 |
+| **mcp-text2sql** | 40110 | Text2SQL（两步法自然语言转 SQL） |
 | **mcp-logging** | 40105 | 日志查询 |
 | **mcp-monitoring** | 40106 | 系统监控 |
 | **mcp-knowledge** | 40107 | 知识库 |

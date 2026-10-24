@@ -1,0 +1,27 @@
+server:
+  port: ${SERVER_PORT:40110}
+
+spring:
+  application:
+    name: yunxi-mcp-text2sql
+
+mcp:
+  server:
+    name: yunxi-mcp-text2sql
+    version: 1.0.0
+
+# LLM 配置：OpenAI 兼容接口（默认指向 DashScope 兼容端点，可替换为任意 OpenAI 兼容服务）
+llm:
+  base-url: ${LLM_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+  api-key: ${LLM_API_KEY:}
+  model: ${LLM_MODEL:qwen-plus}
+  timeout-seconds: ${LLM_TIMEOUT_SECONDS:60}
+
+# Text2SQL 配置：数据源与默认语种
+text2sql:
+  default-language: ${TEXT2SQL_LANGUAGE:chinese}
+  datasources:
+    default:
+      url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:test}?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      username: ${DB_USERNAME:root}
+      password: ${DB_PASSWORD:root}

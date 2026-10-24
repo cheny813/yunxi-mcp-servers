@@ -32,6 +32,7 @@
         <module>mcp-redis</module>
         <module>mcp-milvus</module>
         <module>mcp-qdrant</module>
+        <module>mcp-text2sql</module>
 
         <!-- 新增服务 -->
         <module>mcp-knowledge</module>
